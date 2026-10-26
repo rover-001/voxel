@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "voxel",
+  "name": "Voxel",
+  "version": "1.0.0",
+  "author": "rover",
+  "license": "MIT",
+  "description": "3D isometric voxel diorama and sandbox world builder for Omarchy: snappable modular blocks, animated trees, autonomous wandering creatures, and scenic props.",
+  "keepLoaded": true,
+  "kinds": ["bar-widget", "service"],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml",
+    "service": "Service.qml"
+  },
+  "barWidget": {
+    "displayName": "Voxel Dioramas",
+    "description": "3D isometric voxel art desktop dioramas",
+    "category": "Widgets",
+    "allowMultiple": false
+  }
+}

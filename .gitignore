@@ -1,0 +1,7 @@
+# Omarchy & System artifacts
+*.log
+*.qslog
+.DS_Store
+*~
+*.swp
+*.bak
