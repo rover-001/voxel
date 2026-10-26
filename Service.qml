@@ -68,6 +68,47 @@ Item {
     return "vox_" + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36)
   }
 
+  function findClearSpawnPoint(scrW, scrH) {
+    // Primary staging zone: comfortably below the floating sky islands in the open lower area
+    var targetY = Math.round(scrH * 0.72)
+    var targetX = Math.round(scrW * 0.5 - 34)
+    var clearance = 76
+
+    function isOccupied(x, y) {
+      for (var i = 0; i < root.widgets.length; i++) {
+        var w = root.widgets[i]
+        if (!w) continue
+        if (Math.hypot(Number(w.x || 0) - x, Number(w.y || 0) - y) < clearance) {
+          return true
+        }
+      }
+      return false
+    }
+
+    if (!isOccupied(targetX, targetY)) {
+      return { x: targetX, y: targetY }
+    }
+
+    // Search outwards horizontally and vertically in open staging area
+    var stepX = 72
+    var stepY = 56
+    for (var ring = 1; ring <= 20; ring++) {
+      for (var dx = -ring; dx <= ring; dx++) {
+        for (var dy = -1; dy <= 2; dy++) {
+          var candX = targetX + dx * stepX
+          var candY = targetY + dy * stepY
+          if (candX >= 80 && candX <= scrW - 140 && candY >= 100 && candY <= scrH - 120) {
+            if (!isOccupied(candX, candY)) {
+              return { x: candX, y: candY }
+            }
+          }
+        }
+      }
+    }
+
+    return { x: targetX, y: targetY }
+  }
+
   function placeWidget(styleId, screenName) {
     var scrName = String(screenName || root.primaryScreenName())
     var scrObj = root.screenByName(scrName)
@@ -77,33 +118,18 @@ Item {
     var isBlock = styleId && (styleId.indexOf("block-") !== -1 || styleId.indexOf("voxel-block-") !== -1)
     var isTree = styleId && (styleId.indexOf("tree-") !== -1 || styleId.indexOf("voxel-tree-") !== -1)
     var defaultScale = (isBlock || isTree) ? 3.6 : 2.2
-    var blockSize = Style.space(8) * defaultScale
 
-    // Center squarely on the desktop
-    var cx = Math.round(scrW / 2 - 80)
-    var cy = Math.round(scrH / 2 - 80)
-
-    // Ensure newly spawned widget stacks cleanly rather than clipping inside existing blocks
-    var maxElev = 0
-    var stackOffset = 0
-    for (var i = 0; i < root.widgets.length; i++) {
-      var w = root.widgets[i]
-      if (w && Math.hypot(w.x - cx, w.y - cy) < 70) {
-        if (Number(w.elevation || 0) >= maxElev) {
-          maxElev = Number(w.elevation || 0) + 1
-          stackOffset = maxElev * blockSize
-        }
-      }
-    }
+    // Find a clean, completely unoccupied placement point away from existing islands
+    var pt = root.findClearSpawnPoint(scrW, scrH)
 
     var entry = {
       id: generateId(),
       style: String(styleId || "voxel-block-grass"),
       screen: scrName,
-      x: cx,
-      y: (isBlock || isTree) ? Math.round(cy - stackOffset) : cy,
+      x: pt.x,
+      y: pt.y,
       scale: defaultScale,
-      elevation: (isBlock || isTree) ? maxElev : 0,
+      elevation: 0,
       locked: false,
       rotation: 0
     }
