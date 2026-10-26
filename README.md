@@ -109,13 +109,24 @@ Whether you want a tranquil Japanese zen garden with drifting cherry blossom pet
 - **Linux** (Wayland session, e.g. Hyprland)
 - **[Quickshell](https://quickshell.outfoxxed.me)** & **[Omarchy](https://github.com/omarchy)**
 
-Install directly through the Omarchy CLI:
+### Option 1: Via Omarchy CLI
 
 ```bash
 omarchy plugin add https://github.com/rover-001/voxel.git --enable
 ```
 
-Then reload Omarchy:
+### Option 2: Manual Clone & Symlink
+
+```bash
+# Clone the repository
+git clone https://github.com/rover-001/voxel.git ~/Projects/voxel
+
+# Symlink into Omarchy plugins
+ln -s ~/Projects/voxel ~/.config/omarchy/plugins/voxel
+```
+
+### Reload
+Reload Omarchy to activate:
 
 ```bash
 omarchy restart shell
@@ -130,11 +141,13 @@ Click the **Voxel** icon in your top bar or open the picker panel to start placi
 To disable or remove the plugin from Omarchy:
 
 ```bash
-# Disable the plugin
+# Via Omarchy CLI
 omarchy plugin disable voxel
-
-# Remove the plugin
 omarchy plugin remove voxel
+
+# Or manual removal if symlinked
+rm ~/.config/omarchy/plugins/voxel
+omarchy restart shell
 ```
 
 ---
