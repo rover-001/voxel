@@ -109,29 +109,32 @@ Whether you want a tranquil Japanese zen garden with drifting cherry blossom pet
 - **Linux** (Wayland session, e.g. Hyprland)
 - **[Quickshell](https://quickshell.outfoxxed.me)** & **[Omarchy](https://github.com/omarchy)**
 
-### Quickstart
-1. Clone the repository into your projects directory:
-   ```bash
-   git clone https://github.com/rover-001/voxel.git ~/Projects/voxel
-   ```
+Install directly through the Omarchy CLI:
 
-2. Symlink the plugin into your Omarchy plugins folder:
-   ```bash
-   ln -s ~/Projects/voxel ~/.config/omarchy/plugins/voxel
-   ```
-
-3. Reload Omarchy:
-   ```bash
-   omarchy restart shell
-   ```
-
-4. Click the **Voxel** icon in your top bar or open the picker panel to start placing modular blocks and scenic dioramas!
-
-### Removal
-To remove the plugin:
 ```bash
-rm ~/.config/omarchy/plugins/voxel
+omarchy plugin add https://github.com/rover-001/voxel.git --enable
+```
+
+Then reload Omarchy:
+
+```bash
 omarchy restart shell
+```
+
+Click the **Voxel** icon in your top bar or open the picker panel to start placing modular blocks and scenic dioramas!
+
+---
+
+## 🗑️ Removal
+
+To disable or remove the plugin from Omarchy:
+
+```bash
+# Disable the plugin
+omarchy plugin disable voxel
+
+# Remove the plugin
+omarchy plugin remove voxel
 ```
 
 ---
