@@ -235,7 +235,7 @@ PanelWindow {
 
     clearClusterTimer.stop()
 
-    // Single item rotation (single block or prop like bench, lamp, fence, stairs)
+    // Single item rotation (single block or prop like bench, lamp, fence)
     if (cluster.length === 1) {
       var singleItem = cluster[0]
       if (singleItem.isAnimal) return // Animals manage their own facing direction and are not rotatable

@@ -464,35 +464,7 @@ Item {
       }
 
       // ====================================================================
-      // 7. STAIRS (3-TIER ISOMETRIC ASCENDING STAIRCASE - ROTATABLE!)
-      // ====================================================================
-      else if (root.propType === "stairs") {
-        var stWoodT = "#d97706"
-        var stWoodL = "#b45309"
-        var stWoodR = "#78350f"
-        var stRailT = "#475569"
-        var stRailL = "#334155"
-        var stRailR = "#1e293b"
-
-        // 3 Ascending Steps (Ascends from back to front along v-axis, rotatable 360°)
-        // Step 1 (Bottom Tier)
-        drawIsoBox(-0.65, -0.65, 0.0, 1.3, 0.45, 0.33, stWoodT, stWoodL, stWoodR, stroke)
-        // Step 2 (Middle Tier)
-        drawIsoBox(-0.65, -0.20, 0.0, 1.3, 0.45, 0.66, stWoodT, stWoodL, stWoodR, stroke)
-        // Step 3 (Top Tier - reaches elevation 1.0)
-        drawIsoBox(-0.65,  0.25, 0.0, 1.3, 0.45, 1.00, stWoodT, stWoodL, stWoodR, stroke)
-
-        // Left Stringer & Handrail Post
-        drawIsoBox(-0.75, -0.65, 0.0, 0.12, 1.35, 0.8, stRailT, stRailL, stRailR, stroke)
-        drawIsoBox(-0.75,  0.25, 0.8, 0.12, 0.45, 0.5, stRailT, stRailL, stRailR, stroke)
-
-        // Right Stringer & Handrail Post
-        drawIsoBox( 0.63, -0.65, 0.0, 0.12, 1.35, 0.8, stRailT, stRailL, stRailR, stroke)
-        drawIsoBox( 0.63,  0.25, 0.8, 0.12, 0.45, 0.5, stRailT, stRailL, stRailR, stroke)
-      }
-
-      // ====================================================================
-      // 9. BRIDGE (ARCHED TIMBER FOOTBRIDGE - ROTATABLE!)
+      // 7. BRIDGE (ARCHED TIMBER FOOTBRIDGE - ROTATABLE!)
       // ====================================================================
       else if (root.propType === "bridge") {
         var bWoodT = "#d97706"

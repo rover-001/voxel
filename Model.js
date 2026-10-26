@@ -157,13 +157,6 @@ var ITEMS = [
     defaultScale: 3.6
   },
   {
-    id: "voxel-prop-stairs",
-    category: "props",
-    variant: "prop-stairs",
-    propType: "stairs",
-    defaultScale: 3.6
-  },
-  {
     id: "voxel-prop-bridge",
     category: "props",
     variant: "prop-bridge",

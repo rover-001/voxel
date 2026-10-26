@@ -30,7 +30,6 @@ Item {
   readonly property bool isBlock: dioramaVariant.indexOf("block-") === 0
   readonly property bool isProp: dioramaVariant.indexOf("prop-") === 0
     || dioramaVariant.indexOf("voxel-prop-") === 0
-  readonly property bool isStairs: dioramaVariant.indexOf("stairs") !== -1
   readonly property bool isTree: dioramaVariant.indexOf("tree-") === 0
     || dioramaVariant.indexOf("voxel-tree-") === 0
     || dioramaVariant === "tree"
