@@ -379,7 +379,7 @@ PanelWindow {
   // while the empty central opening allows all mouse clicks/drags to pass straight through to cards!
   Item {
     id: clusterOverlay
-    visible: desktopLayer.clusterBounds.width > 0 && desktopLayer.activeCluster.length > 1
+    visible: desktopLayer.clusterBounds.width > 0 && desktopLayer.activeCluster.length > 0
     x: desktopLayer.clusterBounds.x
     y: desktopLayer.clusterBounds.y
     width: desktopLayer.clusterBounds.width

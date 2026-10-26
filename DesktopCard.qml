@@ -226,10 +226,12 @@ Item {
     function isSlotOccupied(cx, cy, elev) {
       for (var i = 0; i < cardList.length; i++) {
         var c = cardList[i]
-        if (c.elev === elev) {
-          if (Math.hypot(c.cx - cx, c.cy - cy) < 16) {
-            return true
-          }
+        // Never allow two entities to occupy the exact same 2D screen position (prevents clipping inside)
+        if (Math.hypot(c.cx - cx, c.cy - cy) < 20) {
+          return true
+        }
+        if (c.elev === elev && Math.hypot(c.cx - cx, c.cy - cy) < 28) {
+          return true
         }
       }
       return false
@@ -244,6 +246,8 @@ Item {
 
     for (var n = 0; n < nearbyCandidates.length; n++) {
       var other = nearbyCandidates[n]
+      // Solid snap topology: ONLY snap onto building blocks (other.isBlock), never trees or props!
+      if (!other.isBlock) continue
 
       var otherGCX = other.cx
       var otherGCY = other.cy
@@ -358,6 +362,8 @@ Item {
 
   readonly property bool hovered: cardHover.hovered
     || removeArea.containsMouse
+    || rotateCwArea.containsMouse
+    || rotateCcwArea.containsMouse
     || resizeArea.containsMouse
     || layerUpArea.containsMouse
     || layerDownArea.containsMouse
@@ -436,6 +442,98 @@ Item {
       cursorShape: Qt.PointingHandCursor
       hoverEnabled: true
       onClicked: card.removeRequested()
+    }
+  }
+
+  // ---- Rotate Clockwise Button ("↻") --------------------------------------
+  Rectangle {
+    id: rotateCwDot
+    z: 100
+    x: card.width - removeDot.width / 2 - Style.space(22)
+    y: -rotateCwDot.height / 2
+    visible: (card.hovered || card.selected) && !card.locked
+    opacity: visible ? 1 : 0
+    Behavior on opacity { NumberAnimation { duration: 120 } }
+    width: Style.space(18)
+    height: Style.space(18)
+    radius: width / 2
+    color: rotateCwArea.containsMouse ? Util.alpha(Color.accent, 0.25) : Util.alpha(Color.popups.background, 0.95)
+    border.width: 1
+    border.color: rotateCwArea.containsMouse ? Color.accent : Util.alpha(Color.foreground, 0.3)
+
+    Text {
+      anchors.centerIn: parent
+      text: "↻"
+      color: rotateCwArea.containsMouse ? Color.accent : Color.foreground
+      font.pixelSize: Style.space(11)
+      font.bold: true
+      rotation: rotateCwArea.pressed ? 45 : 0
+      Behavior on rotation { NumberAnimation { duration: 120 } }
+    }
+
+    MouseArea {
+      id: rotateCwArea
+      anchors.fill: parent
+      cursorShape: Qt.PointingHandCursor
+      hoverEnabled: true
+      onClicked: {
+        var newAngle = ((Number(card.rotationAngle || 0) + 90) % 360 + 360) % 360
+        card.rotationAngle = newAngle
+        if (card.snapAnim && typeof card.snapAnim.restart === "function") {
+          card.snapAnim.restart()
+        }
+        if (card.service && typeof card.service.cardRotated === "function") {
+          card.service.cardRotated(card.widgetId, newAngle)
+        } else if (card.service && typeof card.service.cardMoved === "function") {
+          card.service.cardMoved(card.widgetId, card.x, card.y, card.elevation, newAngle)
+        }
+      }
+    }
+  }
+
+  // ---- Rotate Counter-Clockwise Button ("↺") ------------------------------
+  Rectangle {
+    id: rotateCcwDot
+    z: 100
+    x: card.width - removeDot.width / 2 - Style.space(44)
+    y: -rotateCcwDot.height / 2
+    visible: (card.hovered || card.selected) && !card.locked
+    opacity: visible ? 1 : 0
+    Behavior on opacity { NumberAnimation { duration: 120 } }
+    width: Style.space(18)
+    height: Style.space(18)
+    radius: width / 2
+    color: rotateCcwArea.containsMouse ? Util.alpha(Color.accent, 0.25) : Util.alpha(Color.popups.background, 0.95)
+    border.width: 1
+    border.color: rotateCcwArea.containsMouse ? Color.accent : Util.alpha(Color.foreground, 0.3)
+
+    Text {
+      anchors.centerIn: parent
+      text: "↺"
+      color: rotateCcwArea.containsMouse ? Color.accent : Color.foreground
+      font.pixelSize: Style.space(11)
+      font.bold: true
+      rotation: rotateCcwArea.pressed ? -45 : 0
+      Behavior on rotation { NumberAnimation { duration: 120 } }
+    }
+
+    MouseArea {
+      id: rotateCcwArea
+      anchors.fill: parent
+      cursorShape: Qt.PointingHandCursor
+      hoverEnabled: true
+      onClicked: {
+        var newAngle = ((Number(card.rotationAngle || 0) - 90) % 360 + 360) % 360
+        card.rotationAngle = newAngle
+        if (card.snapAnim && typeof card.snapAnim.restart === "function") {
+          card.snapAnim.restart()
+        }
+        if (card.service && typeof card.service.cardRotated === "function") {
+          card.service.cardRotated(card.widgetId, newAngle)
+        } else if (card.service && typeof card.service.cardMoved === "function") {
+          card.service.cardMoved(card.widgetId, card.x, card.y, card.elevation, newAngle)
+        }
+      }
     }
   }
 

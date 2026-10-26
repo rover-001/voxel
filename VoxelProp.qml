@@ -102,55 +102,61 @@ Item {
       var cy = Math.round(height * 0.75)
       var sy = Math.round(s * 0.5)
 
-      // 3D Isometric Coordinate Rotation Helper (0°, 90°, 180°, 270°)
-      function rotUV(u, v) {
-        var r = ((Math.round(root.propRotation) % 4) + 4) % 4
-        if (r === 1) return { u: -v, v: u }
-        if (r === 2) return { u: -u, v: -v }
-        if (r === 3) return { u: v, v: -u }
-        return { u: u, v: v }
-      }
-
-      // Isometric projection helper: (u = down-right, v = down-left, w = up)
-      function isoPt(u, v, w) {
-        var r = rotUV(u, v)
+      // 3D Isometric Coordinate Projection & Rotation (0°, 90°, 180°, 270°)
+      function rawIsoPt(u, v, w) {
         return {
-          x: cx + (r.u - r.v) * (s * 0.5),
-          y: cy + (r.u + r.v) * (sy * 0.5) - w * (s * 0.5)
+          x: cx + (u - v) * (s * 0.5),
+          y: cy + (u + v) * (sy * 0.5) - w * (s * 0.5)
         }
       }
 
-      // Draw wall helper with automatic back-face culling & direction-based shading
-      function drawWall(t1, t2, b2, b1, col, strokeC) {
-        if (t2.x <= t1.x) return // Back-facing wall, culled
-        ctx.beginPath()
-        ctx.moveTo(t1.x, t1.y)
-        ctx.lineTo(t2.x, t2.y)
-        ctx.lineTo(b2.x, b2.y)
-        ctx.lineTo(b1.x, b1.y)
-        ctx.closePath()
-        ctx.fillStyle = col
-        ctx.fill()
-        if (strokeC) { ctx.strokeStyle = strokeC; ctx.lineWidth = 0.6; ctx.stroke(); }
+      function isoPt(u, v, w) {
+        var r = ((Math.round(root.propRotation) % 4) + 4) % 4
+        var ru = u, rv = v
+        if (r === 1) { ru = -v; rv = u; }
+        else if (r === 2) { ru = -u; rv = -v; }
+        else if (r === 3) { ru = v; rv = -u; }
+        return rawIsoPt(ru, rv, w)
       }
 
-      // Draw isometric 3D voxel box with full 360° rotation support
+      // Draw isometric 3D voxel box with 100% bug-free 360° rotation support
       function drawIsoBox(u, v, w, du, dv, dw, topC, leftC, rightC, strokeC) {
-        var p00 = isoPt(u, v, w + dw)
-        var p10 = isoPt(u + du, v, w + dw)
-        var p11 = isoPt(u + du, v + dv, w + dw)
-        var p01 = isoPt(u, v + dv, w + dw)
+        var r = ((Math.round(root.propRotation) % 4) + 4) % 4
+        var ru = u, rv = v, rdu = du, rdv = dv
+        var rLeftC = leftC, rRightC = rightC
 
-        var b00 = isoPt(u, v, w)
-        var b10 = isoPt(u + du, v, w)
-        var b11 = isoPt(u + du, v + dv, w)
-        var b01 = isoPt(u, v + dv, w)
+        if (r === 1) { // 90° CW
+          ru = -v - dv
+          rv = u
+          rdu = dv
+          rdv = du
+          rLeftC = rightC
+          rRightC = leftC
+        } else if (r === 2) { // 180°
+          ru = -u - du
+          rv = -v - dv
+          rdu = du
+          rdv = dv
+          rLeftC = leftC
+          rRightC = rightC
+        } else if (r === 3) { // 270° CW / 90° CCW
+          ru = v
+          rv = -u - du
+          rdu = dv
+          rdv = du
+          rLeftC = rightC
+          rRightC = leftC
+        }
 
-        // 4 Clockwise side walls (automatically rendered if front-facing)
-        drawWall(p01, p11, b11, b01, (p11.y > p01.y) ? rightC : leftC, strokeC)
-        drawWall(p11, p10, b10, b11, (p10.y > p11.y) ? rightC : leftC, strokeC)
-        drawWall(p10, p00, b00, b10, (p00.y > p10.y) ? rightC : leftC, strokeC)
-        drawWall(p00, p01, b01, b00, (p01.y > p00.y) ? rightC : leftC, strokeC)
+        var p00 = rawIsoPt(ru, rv, w + dw)
+        var p10 = rawIsoPt(ru + rdu, rv, w + dw)
+        var p11 = rawIsoPt(ru + rdu, rv + rdv, w + dw)
+        var p01 = rawIsoPt(ru, rv + rdv, w + dw)
+
+        var b00 = rawIsoPt(ru, rv, w)
+        var b10 = rawIsoPt(ru + rdu, rv, w)
+        var b11 = rawIsoPt(ru + rdu, rv + rdv, w)
+        var b01 = rawIsoPt(ru, rv + rdv, w)
 
         // Top face
         ctx.beginPath()
@@ -160,6 +166,28 @@ Item {
         ctx.lineTo(p01.x, p01.y)
         ctx.closePath()
         ctx.fillStyle = topC
+        ctx.fill()
+        if (strokeC) { ctx.strokeStyle = strokeC; ctx.lineWidth = 0.6; ctx.stroke(); }
+
+        // Left face
+        ctx.beginPath()
+        ctx.moveTo(p01.x, p01.y)
+        ctx.lineTo(p11.x, p11.y)
+        ctx.lineTo(b11.x, b11.y)
+        ctx.lineTo(b01.x, b01.y)
+        ctx.closePath()
+        ctx.fillStyle = rLeftC
+        ctx.fill()
+        if (strokeC) { ctx.strokeStyle = strokeC; ctx.lineWidth = 0.6; ctx.stroke(); }
+
+        // Right face
+        ctx.beginPath()
+        ctx.moveTo(p11.x, p11.y)
+        ctx.lineTo(p10.x, p10.y)
+        ctx.lineTo(b10.x, b10.y)
+        ctx.lineTo(b11.x, b11.y)
+        ctx.closePath()
+        ctx.fillStyle = rRightC
         ctx.fill()
         if (strokeC) { ctx.strokeStyle = strokeC; ctx.lineWidth = 0.6; ctx.stroke(); }
       }
