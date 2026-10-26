@@ -361,7 +361,15 @@ Item {
     fgColor: Color.foreground
   }
 
-  readonly property bool hovered: cardHover.hovered || resizer.active || dragger.active || card.isClusterDragging
+  readonly property bool hovered: cardHover.hovered || resizer.active || dragger.active
+
+  // Controls are only visible for the single hovered or selected card, and NEVER while dragging
+  readonly property bool controlsVisible: {
+    if (card.locked) return false
+    if (card.isClusterDragging || dragger.active || resizer.active) return false
+    if (card.layerWindow && card.layerWindow.isMovingCluster) return false
+    return cardHover.hovered || card.selected
+  }
 
   HoverHandler {
     id: cardHover
@@ -386,15 +394,13 @@ Item {
     id: outline
     anchors.fill: parent
     anchors.margins: -Style.space(4)
-    visible: ((card.hovered || card.selected) && !card.locked)
+    visible: card.controlsVisible
     opacity: visible ? 1 : 0
     Behavior on opacity { NumberAnimation { duration: 120 } }
 
     ShapePath {
-      strokeColor: (card.hovered || card.selected)
-        ? Color.accent
-        : Util.alpha(Color.accent, 0.45)
-      strokeWidth: (card.hovered || card.selected) ? 2.0 : 1.5
+      strokeColor: Color.accent
+      strokeWidth: 2.0
       strokeStyle: ShapePath.DashLine
       dashPattern: [3, 3]
       fillColor: "transparent"
@@ -412,7 +418,7 @@ Item {
     z: 100
     x: card.width - removeDot.width / 2
     y: -removeDot.height / 2
-    visible: (card.hovered || card.selected) && !card.locked
+    visible: card.controlsVisible
     opacity: visible ? 1 : 0
     Behavior on opacity { NumberAnimation { duration: 120 } }
     width: Style.space(18)
@@ -434,8 +440,8 @@ Item {
       id: removeArea
       anchors.fill: parent
       cursorShape: Qt.PointingHandCursor
-      enabled: (card.hovered || card.selected) && !card.locked
-      hoverEnabled: (card.hovered || card.selected) && !card.locked
+      enabled: card.controlsVisible
+      hoverEnabled: card.controlsVisible
       onClicked: card.removeRequested()
     }
   }
@@ -446,7 +452,7 @@ Item {
     z: 100
     x: card.width - removeDot.width / 2 - Style.space(22)
     y: -rotateCwDot.height / 2
-    visible: (card.hovered || card.selected) && !card.locked && !card.isAnimal
+    visible: card.controlsVisible && !card.isAnimal
     opacity: visible ? 1 : 0
     Behavior on opacity { NumberAnimation { duration: 120 } }
     width: Style.space(18)
@@ -470,8 +476,8 @@ Item {
       id: rotateCwArea
       anchors.fill: parent
       cursorShape: Qt.PointingHandCursor
-      enabled: (card.hovered || card.selected) && !card.locked && !card.isAnimal
-      hoverEnabled: (card.hovered || card.selected) && !card.locked && !card.isAnimal
+      enabled: card.controlsVisible && !card.isAnimal
+      hoverEnabled: card.controlsVisible && !card.isAnimal
       onClicked: {
         var newAngle = ((Number(card.rotationAngle || 0) + 90) % 360 + 360) % 360
         card.rotationAngle = newAngle
@@ -493,7 +499,7 @@ Item {
     z: 100
     x: card.width - removeDot.width / 2 - Style.space(44)
     y: -rotateCcwDot.height / 2
-    visible: (card.hovered || card.selected) && !card.locked && !card.isAnimal
+    visible: card.controlsVisible && !card.isAnimal
     opacity: visible ? 1 : 0
     Behavior on opacity { NumberAnimation { duration: 120 } }
     width: Style.space(18)
@@ -517,8 +523,8 @@ Item {
       id: rotateCcwArea
       anchors.fill: parent
       cursorShape: Qt.PointingHandCursor
-      enabled: (card.hovered || card.selected) && !card.locked && !card.isAnimal
-      hoverEnabled: (card.hovered || card.selected) && !card.locked && !card.isAnimal
+      enabled: card.controlsVisible && !card.isAnimal
+      hoverEnabled: card.controlsVisible && !card.isAnimal
       onClicked: {
         var newAngle = ((Number(card.rotationAngle || 0) - 90) % 360 + 360) % 360
         card.rotationAngle = newAngle
@@ -540,7 +546,7 @@ Item {
     z: 100
     x: -layerUpDot.width / 2
     y: -layerUpDot.height / 2
-    visible: (card.hovered || card.selected) && !card.locked
+    visible: card.controlsVisible
     opacity: visible ? 1 : 0
     Behavior on opacity { NumberAnimation { duration: 120 } }
     width: Style.space(18)
@@ -562,8 +568,8 @@ Item {
       id: layerUpArea
       anchors.fill: parent
       cursorShape: Qt.PointingHandCursor
-      enabled: (card.hovered || card.selected) && !card.locked
-      hoverEnabled: (card.hovered || card.selected) && !card.locked
+      enabled: card.controlsVisible
+      hoverEnabled: card.controlsVisible
       onClicked: {
         var s = Style.space(8) * Math.max(1.0, card.textScale)
         card.elevation += 1
@@ -581,7 +587,7 @@ Item {
     z: 100
     x: -layerDownDot.width / 2
     y: card.height - layerDownDot.height / 2
-    visible: (card.hovered || card.selected) && !card.locked
+    visible: card.controlsVisible
     opacity: visible ? 1 : 0
     Behavior on opacity { NumberAnimation { duration: 120 } }
     width: Style.space(18)
@@ -603,8 +609,8 @@ Item {
       id: layerDownArea
       anchors.fill: parent
       cursorShape: Qt.PointingHandCursor
-      enabled: (card.hovered || card.selected) && !card.locked
-      hoverEnabled: (card.hovered || card.selected) && !card.locked
+      enabled: card.controlsVisible
+      hoverEnabled: card.controlsVisible
       onClicked: {
         if (card.elevation > 0) {
           var s = Style.space(8) * Math.max(1.0, card.textScale)
@@ -625,7 +631,7 @@ Item {
     z: 100
     x: card.width - resizeDot.width / 2
     y: card.height - resizeDot.height / 2
-    visible: (card.hovered || card.selected) && !card.locked
+    visible: card.controlsVisible
     opacity: visible ? 1 : 0
     Behavior on opacity { NumberAnimation { duration: 120 } }
     width: Style.space(18)
@@ -647,8 +653,8 @@ Item {
     MouseArea {
       id: resizeArea
       anchors.fill: parent
-      enabled: (card.hovered || card.selected) && !card.locked
-      hoverEnabled: (card.hovered || card.selected) && !card.locked
+      enabled: card.controlsVisible
+      hoverEnabled: card.controlsVisible
       acceptedButtons: Qt.NoButton
       cursorShape: Qt.SizeFDiagCursor
     }
