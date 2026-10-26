@@ -5,7 +5,8 @@ var CATEGORIES = [
   { id: "blocks", name: "BLOCKS" },
   { id: "trees", name: "TREES" },
   { id: "creatures", name: "ANIMALS" },
-  { id: "props", name: "PROPS" }
+  { id: "props", name: "PROPS" },
+  { id: "time", name: "CLOCK" }
 ];
 
 var ITEMS = [
@@ -206,6 +207,14 @@ var ITEMS = [
     variant: "tree-birch",
     treeType: "birch",
     defaultScale: 3.6
+  },
+
+  // 5. 3D Floating Isometric Voxel Clock & Date
+  {
+    id: "voxel-clock",
+    category: "time",
+    variant: "clock",
+    defaultScale: 1.0
   }
 ];
 

@@ -117,7 +117,8 @@ Item {
 
     var isBlock = styleId && (styleId.indexOf("block-") !== -1 || styleId.indexOf("voxel-block-") !== -1)
     var isTree = styleId && (styleId.indexOf("tree-") !== -1 || styleId.indexOf("voxel-tree-") !== -1)
-    var defaultScale = (isBlock || isTree) ? 3.6 : 2.2
+    var isClock = styleId && (styleId.indexOf("clock") !== -1)
+    var defaultScale = isClock ? 1.0 : ((isBlock || isTree) ? 3.6 : 2.2)
 
     // Find a clean, completely unoccupied placement point away from existing islands
     var pt = root.findClearSpawnPoint(scrW, scrH)
@@ -300,6 +301,12 @@ Item {
       })
     }
 
+    // Skip redundant reloads triggered by our own writes.
+    if (root.widgets.length === list.length && root.canonical() === JSON.stringify({ widgets: list }, null, 2)) {
+      root._initialized = true
+      return
+    }
+
     root._initialized = true
 
     // Reconcile removed widgets
@@ -361,11 +368,5 @@ Item {
       root._initialized = true
       root.widgets = []
     }
-  }
-
-  Timer {
-    interval: 800
-    running: true
-    onTriggered: stateFile.reload()
   }
 }

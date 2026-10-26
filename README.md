@@ -11,9 +11,9 @@
 
 <br/>
 
-[![Voxel Desktop Demo Video](assets/preview.png)](assets/demo.mp4)
+![Voxel Desktop Demo Walkthrough](assets/demo.gif)
 
-*▶ Click the preview image above to view the high-definition video walkthrough ([or open demo.mp4](assets/demo.mp4))*
+*▶ Live gameplay: building isometric dioramas, animal navigation, snap mechanics & floating voxel clock*
 
 <br/>
 

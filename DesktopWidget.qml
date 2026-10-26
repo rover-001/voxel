@@ -28,10 +28,7 @@ PanelWindow {
 
   function checkAndRestartClearTimer() {
     if (desktopLayer.isMovingCluster) return
-    if (desktopLayer.selectedId && desktopLayer.cards[desktopLayer.selectedId]) return
     if (desktopLayer.activeHoveredCard) return
-    if (desktopLayer.outerBorderHovered) return
-    if (clusterOverlay && clusterOverlay.isHovered) return
     clearClusterTimer.restart()
   }
 
@@ -325,11 +322,12 @@ PanelWindow {
 
   Timer {
     id: clearClusterTimer
-    interval: 350
+    interval: 220
     repeat: false
     onTriggered: {
-      if (desktopLayer.selectedId && desktopLayer.cards[desktopLayer.selectedId]) return
-      if (!desktopLayer.activeHoveredCard && !desktopLayer.isMovingCluster && !desktopLayer.outerBorderHovered && (!clusterOverlay || !clusterOverlay.isHovered)) {
+      if (!desktopLayer.activeHoveredCard && !desktopLayer.isMovingCluster) {
+        desktopLayer.hoveredBorderStrips = 0
+        desktopLayer.selectedId = ""
         desktopLayer.clearCluster()
       }
     }
@@ -388,19 +386,6 @@ PanelWindow {
     z: 500000
 
     readonly property real pad: desktopLayer.clusterPadding
-    readonly property bool isHovered: overlayHover.hovered
-
-    // Pass-through hover tracking over entire cluster bounds so outline never flickers or drops
-    HoverHandler {
-      id: overlayHover
-      onHoveredChanged: {
-        if (overlayHover.hovered) {
-          clearClusterTimer.stop()
-        } else {
-          desktopLayer.checkAndRestartClearTimer()
-        }
-      }
-    }
 
     // Outer Dotted Border
     Shape {

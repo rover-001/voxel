@@ -38,87 +38,16 @@ Item {
   // 1. UNIQUE PROCEDURAL ANIMATION CYCLES PER TREE TYPE
   // -------------------------------------------------------------------------
 
-  // Sakura: Gentle blossom breathing & falling petal loop
-  property real sakuraBreeze: 0.0
-  NumberAnimation on sakuraBreeze {
-    from: 0.0; to: Math.PI * 4
-    duration: 3800
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.isSakura
-  }
-  property real sakuraPetalPhase: 0.0
-  NumberAnimation on sakuraPetalPhase {
-    from: 0.0; to: 1.0
-    duration: 3400
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.isSakura
-  }
-
-  // Oak: Heavy branch sway & periodic acorn drop
-  property real oakSway: 0.0
-  NumberAnimation on oakSway {
-    from: 0.0; to: Math.PI * 2
-    duration: 4200
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.isOak
-  }
-  property real acornPhase: 0.0
-  NumberAnimation on acornPhase {
-    from: 0.0; to: 1.0
-    duration: 2600
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.isOak
-  }
-
-  // Autumn: Dynamic gust cycle (calm -> brisk autumn gust -> relax) & leaf whirlwind
-  property real autumnGust: 0.0
-  SequentialAnimation on autumnGust {
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.isAutumn
-    NumberAnimation { from: 0.0; to: 0.15; duration: 1800; easing.type: Easing.InOutQuad }
-    NumberAnimation { from: 0.15; to: 1.0; duration: 900; easing.type: Easing.OutCubic }
-    NumberAnimation { from: 1.0; to: 0.4; duration: 800; easing.type: Easing.InOutQuad }
-    NumberAnimation { from: 0.4; to: 0.0; duration: 1500; easing.type: Easing.InOutQuad }
-  }
-  property real autumnLeafPhase: 0.0
-  NumberAnimation on autumnLeafPhase {
-    from: 0.0; to: 1.0
-    duration: 2500
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.isAutumn
-  }
-
-  // Pine: Alpine cold wind spire sway & snow flurries
-  property real pineSpirePhase: 0.0
-  NumberAnimation on pineSpirePhase {
-    from: 0.0; to: Math.PI * 2
-    duration: 2100
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.isPine
-  }
-  property real snowFlurryPhase: 0.0
-  NumberAnimation on snowFlurryPhase {
-    from: 0.0; to: 1.0
-    duration: 2800
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.isPine
-  }
-
-  // Birch: High-frequency quivering aspen shimmer & floating pollen motes
-  property real birchShimmer: 0.0
-  NumberAnimation on birchShimmer {
-    from: 0.0; to: Math.PI * 4
-    duration: 1200
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.isBirch
-  }
-  property real pollenPhase: 0.0
-  NumberAnimation on pollenPhase {
-    from: 0.0; to: 1.0
-    duration: 3800
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.isBirch
-  }
+  readonly property real sakuraBreeze: 0.0
+  readonly property real sakuraPetalPhase: 0.0
+  readonly property real oakSway: 0.0
+  readonly property real acornPhase: 0.0
+  readonly property real autumnGust: 0.0
+  readonly property real autumnLeafPhase: 0.0
+  readonly property real pineSpirePhase: 0.0
+  readonly property real snowFlurryPhase: 0.0
+  readonly property real birchShimmer: 0.0
+  readonly property real pollenPhase: 0.0
 
   // Interactive rustle bounce pulse on hover/click
   property real rustlePulse: 0.0
@@ -128,17 +57,8 @@ Item {
     NumberAnimation { target: root; property: "rustlePulse"; from: 1.0; to: 0.0; duration: 260; easing.type: Easing.OutBack }
   }
 
+  Component.onCompleted: canvas.requestPaint()
   onTreeTypeChanged: canvas.requestPaint()
-  onSakuraBreezeChanged: canvas.requestPaint()
-  onSakuraPetalPhaseChanged: canvas.requestPaint()
-  onOakSwayChanged: canvas.requestPaint()
-  onAcornPhaseChanged: canvas.requestPaint()
-  onAutumnGustChanged: canvas.requestPaint()
-  onAutumnLeafPhaseChanged: canvas.requestPaint()
-  onPineSpirePhaseChanged: canvas.requestPaint()
-  onSnowFlurryPhaseChanged: canvas.requestPaint()
-  onBirchShimmerChanged: canvas.requestPaint()
-  onPollenPhaseChanged: canvas.requestPaint()
   onRustlePulseChanged: canvas.requestPaint()
   onVoxelUnitChanged: canvas.requestPaint()
 
@@ -161,7 +81,7 @@ Item {
   Canvas {
     id: canvas
     anchors.fill: parent
-    renderTarget: Canvas.FramebufferObject
+    onAvailableChanged: if (available) requestPaint()
 
     onPaint: {
       var ctx = getContext("2d")

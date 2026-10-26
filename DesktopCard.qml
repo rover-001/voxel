@@ -16,18 +16,10 @@ Item {
   required property string widgetStyle
   required property var screen
 
-  property real textScale: isBlock ? 3.6 : 2.2
-  property real rotationAngle: 0
-  property bool locked: false
-  property bool selected: false
-  property bool keepCentered: false
-  property int elevation: 0
-  property var layerWindow: null
-  property bool inActiveCluster: false
-
   readonly property var meta: Model.findById(widgetStyle)
   readonly property string dioramaVariant: meta ? meta.variant : "block-grass"
-  readonly property bool isBlock: dioramaVariant.indexOf("block-") === 0
+  readonly property bool isClock: dioramaVariant === "clock" || dioramaVariant === "voxel-clock"
+  readonly property bool isBlock: dioramaVariant.indexOf("block-") === 0 && !isClock
   readonly property bool isProp: dioramaVariant.indexOf("prop-") === 0
     || dioramaVariant.indexOf("voxel-prop-") === 0
   readonly property bool isTree: dioramaVariant.indexOf("tree-") === 0
@@ -41,6 +33,15 @@ Item {
     || dioramaVariant === "sheep"
     || dioramaVariant === "pig"
 
+  property real textScale: isClock ? 1.0 : (isBlock ? 3.6 : 2.2)
+  property real rotationAngle: 0
+  property bool locked: false
+  property bool selected: false
+  property bool keepCentered: false
+  property int elevation: 0
+  property var layerWindow: null
+  property bool inActiveCluster: false
+
   implicitWidth: diorama.width
   implicitHeight: diorama.height
   width: implicitWidth
@@ -52,6 +53,7 @@ Item {
   // Ground anchor center in desktop layer coordinates (exact integer coordinates)
   readonly property real groundCenterX: Math.round(card.x + card.width * 0.5)
   readonly property real groundCenterY: {
+    if (card.isClock) return Math.round(card.y + card.height * 0.5)
     if (card.isBlock) return Math.round(card.y + card.height * (1.7 / 2.4))
     if (card.isAnimal) return Math.round(card.y + card.height * 0.78)
     if (card.isTree) return Math.round(card.y + card.height * (5.0 / 6.0))
@@ -77,7 +79,7 @@ Item {
       return 200000
     }
     // 2. Active animal walking/hopping: Elevated so it is unconditionally on top of blocks it walks over
-    if (card.isAnimal && diorama.item && diorama.item.isWalking) {
+    if (card.isAnimal && diorama && diorama.isWalking) {
       return 10000 + card.naturalZ
     }
     // 3. Moving whole cluster: Lift all cluster members above background desktop items,
@@ -359,14 +361,7 @@ Item {
     fgColor: Color.foreground
   }
 
-  readonly property bool hovered: cardHover.hovered
-    || removeArea.containsMouse
-    || rotateCwArea.containsMouse
-    || rotateCcwArea.containsMouse
-    || resizeArea.containsMouse
-    || layerUpArea.containsMouse
-    || layerDownArea.containsMouse
-    || resizer.active
+  readonly property bool hovered: cardHover.hovered || resizer.active
 
   HoverHandler {
     id: cardHover
@@ -386,12 +381,12 @@ Item {
     }
   }
 
-  // ---- Dotted selection outline (shown on hover, selected, or active cluster) --
+  // ---- Dotted selection outline (shown on hover or selected) --------------
   Shape {
     id: outline
     anchors.fill: parent
     anchors.margins: -Style.space(4)
-    visible: ((card.hovered || card.selected || card.inActiveCluster) && !card.locked)
+    visible: ((card.hovered || card.selected) && !card.locked)
     opacity: visible ? 1 : 0
     Behavior on opacity { NumberAnimation { duration: 120 } }
 
@@ -439,7 +434,8 @@ Item {
       id: removeArea
       anchors.fill: parent
       cursorShape: Qt.PointingHandCursor
-      hoverEnabled: true
+      enabled: (card.hovered || card.selected) && !card.locked
+      hoverEnabled: (card.hovered || card.selected) && !card.locked
       onClicked: card.removeRequested()
     }
   }
@@ -474,7 +470,8 @@ Item {
       id: rotateCwArea
       anchors.fill: parent
       cursorShape: Qt.PointingHandCursor
-      hoverEnabled: true
+      enabled: (card.hovered || card.selected) && !card.locked && !card.isAnimal
+      hoverEnabled: (card.hovered || card.selected) && !card.locked && !card.isAnimal
       onClicked: {
         var newAngle = ((Number(card.rotationAngle || 0) + 90) % 360 + 360) % 360
         card.rotationAngle = newAngle
@@ -520,7 +517,8 @@ Item {
       id: rotateCcwArea
       anchors.fill: parent
       cursorShape: Qt.PointingHandCursor
-      hoverEnabled: true
+      enabled: (card.hovered || card.selected) && !card.locked && !card.isAnimal
+      hoverEnabled: (card.hovered || card.selected) && !card.locked && !card.isAnimal
       onClicked: {
         var newAngle = ((Number(card.rotationAngle || 0) - 90) % 360 + 360) % 360
         card.rotationAngle = newAngle
@@ -564,7 +562,8 @@ Item {
       id: layerUpArea
       anchors.fill: parent
       cursorShape: Qt.PointingHandCursor
-      hoverEnabled: true
+      enabled: (card.hovered || card.selected) && !card.locked
+      hoverEnabled: (card.hovered || card.selected) && !card.locked
       onClicked: {
         var s = Style.space(8) * Math.max(1.0, card.textScale)
         card.elevation += 1
@@ -604,7 +603,8 @@ Item {
       id: layerDownArea
       anchors.fill: parent
       cursorShape: Qt.PointingHandCursor
-      hoverEnabled: true
+      enabled: (card.hovered || card.selected) && !card.locked
+      hoverEnabled: (card.hovered || card.selected) && !card.locked
       onClicked: {
         if (card.elevation > 0) {
           var s = Style.space(8) * Math.max(1.0, card.textScale)
@@ -647,7 +647,8 @@ Item {
     MouseArea {
       id: resizeArea
       anchors.fill: parent
-      hoverEnabled: true
+      enabled: (card.hovered || card.selected) && !card.locked
+      hoverEnabled: (card.hovered || card.selected) && !card.locked
       acceptedButtons: Qt.NoButton
       cursorShape: Qt.SizeFDiagCursor
     }

@@ -30,56 +30,20 @@ Item {
 
   // ---- Animated Prop Loops -----------------------------------------------
 
-  // Lamp: Gentle breathing lantern glow
-  property real lampGlow: 0.5
-  SequentialAnimation on lampGlow {
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.propType === "lamp"
-    NumberAnimation { from: 0.4; to: 0.85; duration: 1800; easing.type: Easing.InOutSine }
-    NumberAnimation { from: 0.85; to: 0.55; duration: 1200; easing.type: Easing.InOutSine }
-    NumberAnimation { from: 0.55; to: 0.95; duration: 1600; easing.type: Easing.InOutSine }
-    NumberAnimation { from: 0.95; to: 0.4; duration: 2000; easing.type: Easing.InOutSine }
-  }
+  readonly property real lampGlow: 0.8
+  readonly property real waterPhase: 0.3
+  readonly property real flamePhase: 0.4
+  readonly property real flowerSway: 0.0
 
-  // Fountain: Continuous water ripple & droplet spray loop
-  property real waterPhase: 0.0
-  NumberAnimation on waterPhase {
-    from: 0.0; to: 1.0
-    duration: 2400
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.propType === "fountain"
-  }
-
-  // Campfire: Fast crackling flame flicker and rising smoke
-  property real flamePhase: 0.0
-  NumberAnimation on flamePhase {
-    from: 0.0; to: 1.0
-    duration: 1200
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.propType === "campfire"
-  }
-
-  // Flowers: Gentle breeze petal sway
-  property real flowerSway: 0.0
-  NumberAnimation on flowerSway {
-    from: 0.0; to: Math.PI * 2
-    duration: 3200
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.propType === "flowers"
-  }
-
+  Component.onCompleted: canvas.requestPaint()
   onPropTypeChanged: canvas.requestPaint()
   onPropRotationChanged: canvas.requestPaint()
   onVoxelUnitChanged: canvas.requestPaint()
-  onLampGlowChanged: canvas.requestPaint()
-  onWaterPhaseChanged: canvas.requestPaint()
-  onFlamePhaseChanged: canvas.requestPaint()
-  onFlowerSwayChanged: canvas.requestPaint()
 
   Canvas {
     id: canvas
     anchors.fill: parent
-    renderTarget: Canvas.FramebufferObject
+    onAvailableChanged: if (available) requestPaint()
 
     onPaint: {
       var ctx = getContext("2d")

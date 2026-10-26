@@ -253,6 +253,17 @@ Panel {
               fgColor: root.barForeground
               accentColor: Color.accent
             }
+
+            // Live Voxel Clock Preview
+            VoxelClock {
+              id: previewClock
+              anchors.centerIn: parent
+              visible: root.currentItem && root.currentItem.category === "time"
+              active: root.opened && visible
+              clockScale: 0.95
+              fgColor: root.barForeground
+              accentColor: Color.accent
+            }
           }
 
           // Direct click on stage to place on desktop

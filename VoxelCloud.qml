@@ -1,8 +1,7 @@
 import QtQuick
 import qs.Commons
 
-// VoxelCloud — Animated puffy 3D isometric floating cloud.
-// Gently drifts back and forth with soft volumetric shadows.
+// VoxelCloud — Stationary puffy 3D isometric floating cloud.
 Item {
   id: root
 
@@ -17,21 +16,16 @@ Item {
   width: implicitWidth
   height: implicitHeight
 
-  property real driftPhase: 0
-  NumberAnimation on driftPhase {
-    from: 0; to: Math.PI * 2
-    duration: 4000
-    loops: Animation.Infinite
-    running: root.active && root.visible
-  }
+  readonly property real driftPhase: 0.0
 
-  onDriftPhaseChanged: canvas.requestPaint()
+  Component.onCompleted: canvas.requestPaint()
   onAccentColorChanged: canvas.requestPaint()
+  onFgColorChanged: canvas.requestPaint()
 
   Canvas {
     id: canvas
     anchors.fill: parent
-    renderTarget: Canvas.FramebufferObject
+    onAvailableChanged: if (available) requestPaint()
 
     onPaint: {
       var ctx = getContext("2d")
@@ -48,78 +42,74 @@ Item {
       var cy = height * 0.72 + driftY
 
       function drawCube(x, y, sz, topC, leftC, rightC) {
-        var cs = sz || s
-        var ch = cs
-        var csy = cs * 0.5
+        var hSz = sz
+        var sySz = sz * 0.5
 
-        ctx.beginPath()
-        ctx.moveTo(x, y - ch - csy)
-        ctx.lineTo(x + cs, y - ch)
-        ctx.lineTo(x, y - ch + csy)
-        ctx.lineTo(x - cs, y - ch)
-        ctx.closePath()
+        // Top face
         ctx.fillStyle = topC
-        ctx.fill()
-        ctx.strokeStyle = "rgba(0,0,0,0.12)"
-        ctx.lineWidth = 0.8
-        ctx.stroke()
-
         ctx.beginPath()
-        ctx.moveTo(x - cs, y - ch)
-        ctx.lineTo(x, y - ch + csy)
-        ctx.lineTo(x, y + csy)
-        ctx.lineTo(x - cs, y)
+        ctx.moveTo(x, y - hSz - sySz)
+        ctx.lineTo(x + sz, y - hSz)
+        ctx.lineTo(x, y - hSz + sySz)
+        ctx.lineTo(x - sz, y - hSz)
         ctx.closePath()
+        ctx.fill()
+
+        // Left face
         ctx.fillStyle = leftC
-        ctx.fill()
-        ctx.strokeStyle = "rgba(0,0,0,0.12)"
-        ctx.lineWidth = 0.8
-        ctx.stroke()
-
         ctx.beginPath()
-        ctx.moveTo(x, y - ch + csy)
-        ctx.lineTo(x + cs, y - ch)
-        ctx.lineTo(x + cs, y)
-        ctx.lineTo(x, y + csy)
+        ctx.moveTo(x - sz, y - hSz)
+        ctx.lineTo(x, y - hSz + sySz)
+        ctx.lineTo(x, y + sySz)
+        ctx.lineTo(x - sz, y)
         ctx.closePath()
-        ctx.fillStyle = rightC
         ctx.fill()
-        ctx.strokeStyle = "rgba(0,0,0,0.12)"
-        ctx.lineWidth = 0.8
-        ctx.stroke()
+
+        // Right face
+        ctx.fillStyle = rightC
+        ctx.beginPath()
+        ctx.moveTo(x, y - hSz + sySz)
+        ctx.lineTo(x + sz, y - hSz)
+        ctx.lineTo(x + sz, y)
+        ctx.lineTo(x, y + sySz)
+        ctx.closePath()
+        ctx.fill()
       }
 
-      function toIso(gx, gy, gz) {
-        var ix = cx + (gx - gz) * (s * 1.3)
-        var iy = cy - gy * (s * 1.1) + (gx + gz) * (s * 0.65)
-        return { x: ix, y: iy }
-      }
+      // Volumetric cloud voxels
+      var cTop = "#FFFFFF"
+      var cLeft = "#E2E8F0"
+      var cRight = "#CBD5E1"
+      var cShadowTop = "#94A3B8"
+      var cShadowLeft = "#64748B"
+      var cShadowRight = "#475569"
 
-      // Cloud cubes cluster
+      // Base shadow / bottom layer
+      drawCube(cx - s * 1.5, cy + sy * 0.5, s * 0.9, cShadowTop, cShadowLeft, cShadowRight)
+      drawCube(cx, cy + sy * 0.8, s * 1.1, cShadowTop, cShadowLeft, cShadowRight)
+      drawCube(cx + s * 1.4, cy + sy * 0.4, s * 0.85, cShadowTop, cShadowLeft, cShadowRight)
+
+      // Main puffy cloud cluster (isometric sorted back-to-front)
       var cloudBlocks = [
-        // Base tier
-        { gx: -1.2, gy: 0, gz:  0.0, col: "#ffffff" },
-        { gx: -0.6, gy: 0, gz: -0.6, col: "#f8fafc" },
-        { gx:  0.0, gy: 0, gz:  0.0, col: "#ffffff" },
-        { gx:  0.6, gy: 0, gz:  0.6, col: "#f8fafc" },
-        { gx:  1.2, gy: 0, gz:  0.0, col: "#f1f5f9" },
-        { gx:  0.0, gy: 0, gz: -0.8, col: "#e2e8f0" },
-        { gx: -0.6, gy: 0, gz:  0.6, col: "#f8fafc" },
-        // Middle puff tier
-        { gx: -0.6, gy: 1.0, gz: 0.0, col: "#ffffff" },
-        { gx:  0.0, gy: 1.0, gz: 0.0, col: "#ffffff" },
-        { gx:  0.6, gy: 1.0, gz: 0.0, col: "#ffffff" },
-        { gx:  0.0, gy: 1.0, gz:-0.4, col: "#ffffff" },
-        // Top crown puff
-        { gx:  0.0, gy: 1.9, gz: 0.0, col: "#ffffff" }
+        { gx: -2, gy: 0, gz: 0, sz: s * 0.85, top: cTop, left: cLeft, right: cRight },
+        { gx: -1, gy: 0, gz: -1, sz: s * 1.1, top: cTop, left: cLeft, right: cRight },
+        { gx: -1, gy: 1, gz: 0, sz: s * 1.25, top: "#FFFFFF", left: "#F8FAFC", right: "#E2E8F0" },
+        { gx: 0, gy: 0, gz: 0, sz: s * 1.35, top: "#FFFFFF", left: "#F1F5F9", right: "#CBD5E1" },
+        { gx: 0, gy: 1, gz: -0.5, sz: s * 1.4, top: "#FFFFFF", left: "#FFFFFF", right: "#E2E8F0" },
+        { gx: 1, gy: 0, gz: -0.8, sz: s * 1.15, top: cTop, left: cLeft, right: cRight },
+        { gx: 1, gy: 1, gz: 0, sz: s * 1.1, top: "#FFFFFF", left: "#F8FAFC", right: "#E2E8F0" },
+        { gx: 2, gy: 0, gz: 0, sz: s * 0.8, top: cTop, left: cLeft, right: cRight },
+        { gx: 0.5, gy: 0.5, gz: 1, sz: s * 0.95, top: cTop, left: cLeft, right: cRight },
+        { gx: -0.8, gy: 0.4, gz: 0.8, sz: s * 0.9, top: cTop, left: cLeft, right: cRight },
       ]
 
       cloudBlocks.sort(function(a, b) { return (a.gx + a.gz) - (b.gx + b.gz) })
 
       for (var i = 0; i < cloudBlocks.length; i++) {
         var b = cloudBlocks[i]
-        var pt = toIso(b.gx, b.gy, b.gz)
-        drawCube(pt.x, pt.y, s * 0.9, "#ffffff", b.col, "#cbd5e1")
+        var bx = cx + (b.gx - b.gz) * (s * 0.8)
+        var by = cy + (b.gx + b.gz) * (sy * 0.45) - b.gy * (h * 0.85)
+        drawCube(bx, by, b.sz, b.top, b.left, b.right)
       }
     }
   }

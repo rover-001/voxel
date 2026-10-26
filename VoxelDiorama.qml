@@ -2,12 +2,8 @@ import QtQuick
 import Quickshell
 import qs.Commons
 
-// VoxelDiorama — Host for 3D isometric voxel trees, building blocks, clouds, and animals:
-// - tree-*: Animated 3D Voxel Trees (Sakura, Oak, Autumn Maple, Pine, Birch)
-// - cloud: Animated Puffy 3D Cloud
-// - animal-*: Autonomous wandering voxel animals (Chicken, Fox, Cat, Sheep, Pig)
-// - block-*: Modular snappable voxel building blocks
-// 100% transparent floating background.
+// VoxelDiorama — Lightweight Host for 3D isometric voxel entities.
+// Uses a dynamic Loader so each card only instantiates its specific visual component.
 Item {
   id: root
 
@@ -19,6 +15,7 @@ Item {
   property string variant: "block-grass"
   property int propRotation: 0
 
+  readonly property bool isClock: variant === "clock" || variant === "voxel-clock"
   readonly property bool isTree: variant.indexOf("tree-") === 0
     || variant.indexOf("voxel-tree-") === 0
     || variant === "tree"
@@ -33,7 +30,8 @@ Item {
     || variant === "sheep"
     || variant === "pig"
 
-  readonly property bool isBlock: !isTree && !isCloud && !isAnimal && !isProp
+  readonly property bool isBlock: !isTree && !isCloud && !isAnimal && !isProp && !isClock
+  readonly property bool isWalking: isAnimal && faceLoader.item ? faceLoader.item.isWalking : false
 
   readonly property string treeType: {
     if (variant.indexOf("sakura") !== -1) return "sakura"
@@ -68,75 +66,86 @@ Item {
     return "grass"
   }
 
-  width: {
-    if (isTree) return treeFace.width
-    if (isCloud) return cloudFace.width
-    if (isAnimal) return animalFace.width
-    if (isProp) return propFace.width
-    return blockFace.width
-  }
+  width: faceLoader.item ? faceLoader.item.width : 0
+  height: faceLoader.item ? faceLoader.item.height : 0
 
-  height: {
-    if (isTree) return treeFace.height
-    if (isCloud) return cloudFace.height
-    if (isAnimal) return animalFace.height
-    if (isProp) return propFace.height
-    return blockFace.height
-  }
-
-  VoxelTree {
-    id: treeFace
+  Loader {
+    id: faceLoader
     anchors.centerIn: parent
-    visible: root.isTree
-    active: root.active && visible
-    widgetScale: root.widgetScale
-    treeType: root.treeType
-    fgColor: root.fgColor
-    accentColor: root.accentColor
+    asynchronous: false
+    sourceComponent: {
+      if (root.isClock) return clockComp
+      if (root.isTree) return treeComp
+      if (root.isCloud) return cloudComp
+      if (root.isAnimal) return animalComp
+      if (root.isProp) return propComp
+      return blockComp
+    }
   }
 
-  VoxelCloud {
-    id: cloudFace
-    anchors.centerIn: parent
-    visible: root.isCloud
-    active: root.active && visible
-    widgetScale: root.widgetScale
-    fgColor: root.fgColor
-    accentColor: root.accentColor
+  Component {
+    id: clockComp
+    VoxelClock {
+      clockScale: root.widgetScale
+      fgColor: root.fgColor
+      accentColor: root.accentColor
+      active: root.active
+    }
   }
 
-  VoxelAnimal {
-    id: animalFace
-    card: root.card
-    anchors.centerIn: parent
-    visible: root.isAnimal
-    active: root.active && visible
-    widgetScale: root.widgetScale
-    animalType: root.animalType
-    fgColor: root.fgColor
-    accentColor: root.accentColor
+  Component {
+    id: treeComp
+    VoxelTree {
+      widgetScale: root.widgetScale
+      treeType: root.treeType
+      fgColor: root.fgColor
+      accentColor: root.accentColor
+      active: root.active
+    }
   }
 
-  VoxelProp {
-    id: propFace
-    anchors.centerIn: parent
-    visible: root.isProp
-    active: root.active && visible
-    widgetScale: root.widgetScale
-    propType: root.propType
-    propRotation: root.propRotation
-    fgColor: root.fgColor
-    accentColor: root.accentColor
+  Component {
+    id: cloudComp
+    VoxelCloud {
+      widgetScale: root.widgetScale
+      fgColor: root.fgColor
+      accentColor: root.accentColor
+      active: root.active
+    }
   }
 
-  VoxelBlock {
-    id: blockFace
-    anchors.centerIn: parent
-    visible: root.isBlock
-    active: root.active && visible
-    widgetScale: root.widgetScale
-    blockType: root.blockType
-    fgColor: root.fgColor
-    accentColor: root.accentColor
+  Component {
+    id: animalComp
+    VoxelAnimal {
+      card: root.card
+      widgetScale: root.widgetScale
+      animalType: root.animalType
+      fgColor: root.fgColor
+      accentColor: root.accentColor
+      active: root.active
+    }
+  }
+
+  Component {
+    id: propComp
+    VoxelProp {
+      widgetScale: root.widgetScale
+      propType: root.propType
+      propRotation: root.propRotation
+      fgColor: root.fgColor
+      accentColor: root.accentColor
+      active: root.active
+    }
+  }
+
+  Component {
+    id: blockComp
+    VoxelBlock {
+      widgetScale: root.widgetScale
+      blockType: root.blockType
+      fgColor: root.fgColor
+      accentColor: root.accentColor
+      active: root.active
+    }
   }
 }

@@ -13,14 +13,8 @@ Item {
   property bool active: true
   property string blockType: "grass"
 
-  // Animated water shimmer loop for water blocks
-  property real waterPhase: 0.0
-  NumberAnimation on waterPhase {
-    from: 0.0; to: 1.0
-    duration: 3200
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.blockType === "water"
-  }
+  // Static water phase constant
+  readonly property real waterPhase: 0.0
 
   // Unified even-integer voxel unit for razor-sharp, 100% even isometric seams
   readonly property real voxelUnit: Math.round((Style.space(8) * root.widgetScale) / 2) * 2
@@ -30,16 +24,16 @@ Item {
   width: implicitWidth
   height: implicitHeight
 
+  Component.onCompleted: canvas.requestPaint()
   onBlockTypeChanged: canvas.requestPaint()
   onAccentColorChanged: canvas.requestPaint()
   onFgColorChanged: canvas.requestPaint()
   onVoxelUnitChanged: canvas.requestPaint()
-  onWaterPhaseChanged: canvas.requestPaint()
 
   Canvas {
     id: canvas
     anchors.fill: parent
-    renderTarget: Canvas.FramebufferObject
+    onAvailableChanged: if (available) requestPaint()
 
     function colorLuminance(hex, lum) {
       hex = String(hex).replace(/[^0-9a-f]/gi, '')
