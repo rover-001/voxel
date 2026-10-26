@@ -127,6 +127,13 @@ Whether you want a tranquil Japanese zen garden with drifting cherry blossom pet
 
 4. Click the **Voxel** icon in your top bar or open the picker panel to start placing modular blocks and scenic dioramas!
 
+### Removal
+To remove the plugin:
+```bash
+rm ~/.config/omarchy/plugins/voxel
+omarchy restart shell
+```
+
 ---
 
 ## 💖 Support & Donations
