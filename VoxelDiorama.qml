@@ -58,6 +58,9 @@ Item {
     if (variant.indexOf("flowers") !== -1) return "flowers"
     if (variant.indexOf("fence") !== -1) return "fence"
     if (variant.indexOf("waterfall") !== -1) return "waterfall"
+    if (variant.indexOf("stairs") !== -1) return "stairs"
+    if (variant.indexOf("bridge") !== -1) return "bridge"
+    if (variant.indexOf("stepping-stones") !== -1) return "stepping-stones"
     return "bench"
   }
 

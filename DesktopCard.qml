@@ -30,6 +30,7 @@ Item {
   readonly property bool isBlock: dioramaVariant.indexOf("block-") === 0
   readonly property bool isProp: dioramaVariant.indexOf("prop-") === 0
     || dioramaVariant.indexOf("voxel-prop-") === 0
+  readonly property bool isStairs: dioramaVariant.indexOf("stairs") !== -1
   readonly property bool isTree: dioramaVariant.indexOf("tree-") === 0
     || dioramaVariant.indexOf("voxel-tree-") === 0
     || dioramaVariant === "tree"
@@ -74,7 +75,7 @@ Item {
   z: {
     // 1. Single card dragging or corner resizing: Held item floats on top
     if (resizer.active || (dragger.active && !dragger.isGroupDrag)) {
-      return 200000 + card.naturalZ
+      return 200000
     }
     // 2. Active animal walking/hopping: Elevated so it is unconditionally on top of blocks it walks over
     if (card.isAnimal && diorama.item && diorama.item.isWalking) {
@@ -190,13 +191,43 @@ Item {
       }
     }
 
+    // High-performance snapshot & spatial indexing: reads cards into plain JS numbers once
+    var cardList = []
+    var nearbyCandidates = []
+    var maxReach = thresh + 140
+
+    for (var id in cards) {
+      if (excludeMap[id]) continue
+      var o = cards[id]
+      if (!o) continue
+      var ocx = o.groundCenterX
+      var ocy = o.groundCenterY
+      var oelev = Number(o.elevation || 0)
+      var itemData = {
+        cx: ocx,
+        cy: ocy,
+        elev: oelev,
+        scale: o.textScale,
+        isBlock: o.isBlock,
+        isTree: o.isTree,
+        isProp: o.isProp,
+        isAnimal: o.isAnimal
+      }
+      cardList.push(itemData)
+
+      // Only check slots of blocks physically within reach of the dragged card
+      if (Math.abs(ocx - candidateGCX) < maxReach && Math.abs(ocy - candidateGCY) < maxReach) {
+        nearbyCandidates.push(itemData)
+      }
+    }
+
+    if (!nearbyCandidates.length) return { found: false }
+
     function isSlotOccupied(cx, cy, elev) {
-      for (var otherId in cards) {
-        if (excludeMap[otherId]) continue
-        var o = cards[otherId]
-        if (!o) continue
-        if (Number(o.elevation || 0) === elev) {
-          if (Math.hypot(o.groundCenterX - cx, o.groundCenterY - cy) < 16) {
+      for (var i = 0; i < cardList.length; i++) {
+        var c = cardList[i]
+        if (c.elev === elev) {
+          if (Math.hypot(c.cx - cx, c.cy - cy) < 16) {
             return true
           }
         }
@@ -211,15 +242,13 @@ Item {
     var foundSnap = false
     var minDistance = thresh + 1
 
-    for (var id in cards) {
-      if (excludeMap[id]) continue
-      var other = cards[id]
-      if (!other) continue
+    for (var n = 0; n < nearbyCandidates.length; n++) {
+      var other = nearbyCandidates[n]
 
-      var otherGCX = other.groundCenterX
-      var otherGCY = other.groundCenterY
-      var otherElev = Number(other.elevation || 0)
-      var targetScale = (card.isBlock && other.isBlock) ? other.textScale : card.textScale
+      var otherGCX = other.cx
+      var otherGCY = other.cy
+      var otherElev = other.elev
+      var targetScale = (card.isBlock && other.isBlock) ? other.scale : card.textScale
       // Even-integer isometric unit: guarantees laser-straight, 100% even tile edges
       var s = Math.round((Style.space(8) * targetScale) / 2) * 2
       var unitStepX = s

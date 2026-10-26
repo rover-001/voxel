@@ -290,24 +290,6 @@ Item {
         // Spout Finial
         drawIsoBox(-0.12, -0.12, 1.17, 0.24, 0.24, 0.3, fBaseT, fBaseL, fBaseR, stroke)
 
-        // Animated Water Ripples on Basin
-        var ripplePt = isoPt(0, 0, 0.46)
-        for (var rIdx = 0; rIdx < 2; rIdx++) {
-          var rProgress = (root.waterPhase + rIdx * 0.5) % 1.0
-          var rRadius = s * (0.2 + rProgress * 0.7)
-          var rAlpha = Math.sin(rProgress * Math.PI) * 0.65
-
-          ctx.save()
-          ctx.beginPath()
-          ctx.translate(ripplePt.x, ripplePt.y)
-          ctx.scale(1.0, 0.5)
-          ctx.arc(0, 0, rRadius, 0, Math.PI * 2)
-          ctx.strokeStyle = "rgba(224, 242, 254, " + rAlpha + ")"
-          ctx.lineWidth = 1.2
-          ctx.stroke()
-          ctx.restore()
-        }
-
         // Animated Splash Droplets springing from spout
         var dropDirs = [
           { u:  0.25, v:  0.05 },
@@ -540,6 +522,93 @@ Item {
         ctx.lineWidth = 1.4
         ctx.stroke()
         ctx.restore()
+      }
+
+      // ====================================================================
+      // 8. STAIRS (3-TIER ISOMETRIC ASCENDING STAIRCASE - ROTATABLE!)
+      // ====================================================================
+      else if (root.propType === "stairs") {
+        var stWoodT = "#d97706"
+        var stWoodL = "#b45309"
+        var stWoodR = "#78350f"
+        var stRailT = "#475569"
+        var stRailL = "#334155"
+        var stRailR = "#1e293b"
+
+        // 3 Ascending Steps (Ascends from back to front along v-axis, rotatable 360°)
+        // Step 1 (Bottom Tier)
+        drawIsoBox(-0.65, -0.65, 0.0, 1.3, 0.45, 0.33, stWoodT, stWoodL, stWoodR, stroke)
+        // Step 2 (Middle Tier)
+        drawIsoBox(-0.65, -0.20, 0.0, 1.3, 0.45, 0.66, stWoodT, stWoodL, stWoodR, stroke)
+        // Step 3 (Top Tier - reaches elevation 1.0)
+        drawIsoBox(-0.65,  0.25, 0.0, 1.3, 0.45, 1.00, stWoodT, stWoodL, stWoodR, stroke)
+
+        // Left Stringer & Handrail Post
+        drawIsoBox(-0.75, -0.65, 0.0, 0.12, 1.35, 0.8, stRailT, stRailL, stRailR, stroke)
+        drawIsoBox(-0.75,  0.25, 0.8, 0.12, 0.45, 0.5, stRailT, stRailL, stRailR, stroke)
+
+        // Right Stringer & Handrail Post
+        drawIsoBox( 0.63, -0.65, 0.0, 0.12, 1.35, 0.8, stRailT, stRailL, stRailR, stroke)
+        drawIsoBox( 0.63,  0.25, 0.8, 0.12, 0.45, 0.5, stRailT, stRailL, stRailR, stroke)
+      }
+
+      // ====================================================================
+      // 9. BRIDGE (ARCHED TIMBER FOOTBRIDGE - ROTATABLE!)
+      // ====================================================================
+      else if (root.propType === "bridge") {
+        var bWoodT = "#d97706"
+        var bWoodL = "#b45309"
+        var bWoodR = "#78350f"
+        var bDarkT = "#92400e"
+        var bDarkL = "#78350f"
+        var bDarkR = "#451a03"
+
+        // 4 Corner Foundation Support Blocks
+        drawIsoBox(-0.75, -0.75, 0, 0.25, 0.25, 0.4, bDarkT, bDarkL, bDarkR, stroke)
+        drawIsoBox( 0.50, -0.75, 0, 0.25, 0.25, 0.4, bDarkT, bDarkL, bDarkR, stroke)
+        drawIsoBox(-0.75,  0.50, 0, 0.25, 0.25, 0.4, bDarkT, bDarkL, bDarkR, stroke)
+        drawIsoBox( 0.50,  0.50, 0, 0.25, 0.25, 0.4, bDarkT, bDarkL, bDarkR, stroke)
+
+        // Arched Bridge Deck Slats (Rises in center from 0.35 to 0.55)
+        drawIsoBox(-0.65, -0.75, 0.32, 1.3, 0.35, 0.1, bWoodT, bWoodL, bWoodR, stroke)
+        drawIsoBox(-0.65, -0.40, 0.42, 1.3, 0.38, 0.1, bWoodT, bWoodL, bWoodR, stroke)
+        drawIsoBox(-0.65, -0.02, 0.50, 1.3, 0.42, 0.1, bWoodT, bWoodL, bWoodR, stroke)
+        drawIsoBox(-0.65,  0.40, 0.32, 1.3, 0.35, 0.1, bWoodT, bWoodL, bWoodR, stroke)
+
+        // Left Handrail Posts & Top Rail
+        drawIsoBox(-0.75, -0.75, 0.4, 0.1, 0.1, 0.5, bDarkT, bDarkL, bDarkR, stroke)
+        drawIsoBox(-0.75,  0.00, 0.55, 0.1, 0.1, 0.5, bDarkT, bDarkL, bDarkR, stroke)
+        drawIsoBox(-0.75,  0.65, 0.4, 0.1, 0.1, 0.5, bDarkT, bDarkL, bDarkR, stroke)
+        drawIsoBox(-0.75, -0.75, 0.9, 0.1, 1.5, 0.08, bWoodT, bWoodL, bWoodR, stroke)
+
+        // Right Handrail Posts & Top Rail
+        drawIsoBox( 0.65, -0.75, 0.4, 0.1, 0.1, 0.5, bDarkT, bDarkL, bDarkR, stroke)
+        drawIsoBox( 0.65,  0.00, 0.55, 0.1, 0.1, 0.5, bDarkT, bDarkL, bDarkR, stroke)
+        drawIsoBox( 0.65,  0.65, 0.4, 0.1, 0.1, 0.5, bDarkT, bDarkL, bDarkR, stroke)
+        drawIsoBox( 0.65, -0.75, 0.9, 0.1, 1.5, 0.08, bWoodT, bWoodL, bWoodR, stroke)
+      }
+
+      // ====================================================================
+      // 10. STEPPING STONES (RIVER ROCK PATHWAY - ROTATABLE!)
+      // ====================================================================
+      else if (root.propType === "stepping-stones") {
+        var sRockT = "#94a3b8"
+        var sRockL = "#64748b"
+        var sRockR = "#475569"
+        var sMossT = "#22c55e"
+        var sMossL = "#16a34a"
+        var sMossR = "#15803d"
+
+        // Stone 1 (Back-left flat paver)
+        drawIsoBox(-0.55, -0.55, 0, 0.45, 0.45, 0.12, sRockT, sRockL, sRockR, stroke)
+        drawIsoBox(-0.50, -0.30, 0.11, 0.18, 0.16, 0.04, sMossT, sMossL, sMossR, null)
+
+        // Stone 2 (Center paver)
+        drawIsoBox(-0.15, -0.15, 0, 0.52, 0.48, 0.14, sRockT, sRockL, sRockR, stroke)
+        drawIsoBox( 0.05, -0.05, 0.13, 0.20, 0.18, 0.04, sMossT, sMossL, sMossR, null)
+
+        // Stone 3 (Front-right paver)
+        drawIsoBox( 0.15,  0.25, 0, 0.46, 0.42, 0.12, sRockT, sRockL, sRockR, stroke)
       }
     }
   }

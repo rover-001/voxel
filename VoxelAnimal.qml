@@ -202,22 +202,24 @@ Item {
       if (!c) continue
 
       var isModularBlock = c.isBlock || (c.dioramaVariant && c.dioramaVariant.indexOf("block-") === 0)
+      var isStairs = c.isStairs || (c.dioramaVariant && c.dioramaVariant.indexOf("stairs") !== -1)
 
-      if (isModularBlock) {
+      if (isModularBlock || isStairs) {
         // Only exposed top faces are walkable surfaces! Covered blocks underneath are excluded.
         if (!root.isBlockCovered(c, all)) {
           surfaceNodes.push({
             x: c.groundCenterX,
             y: c.groundCenterY - (Style.space(8) * c.textScale),
             elev: Number(c.elevation || 0) + 1,
-            id: c.widgetId
+            id: c.widgetId,
+            isStairs: isStairs
           })
         }
       }
     }
 
     if (surfaceNodes.length > 0) {
-      // Find the surface node closest to our current animal feet
+      // Find the surface node closest to our current animal feet on our current elevation
       var currentFeetX = root.card.x + root.width * 0.5
       var currentFeetY = root.card.y + root.height * 0.78
       var currentNode = null
@@ -226,6 +228,10 @@ Item {
       for (var j = 0; j < surfaceNodes.length; j++) {
         var node = surfaceNodes[j]
         var d = Math.hypot(currentFeetX - node.x, currentFeetY - node.y)
+        // Strict level preservation: penalize different elevation so animal stays on its level
+        if (root.card && node.elev !== root.card.elevation) {
+          d += 1000
+        }
         if (d < minDist) {
           minDist = d
           currentNode = node
@@ -256,11 +262,21 @@ Item {
           var cand = surfaceNodes[k]
           if (cand === currentNode) continue
           var dElev = Math.abs(Number(cand.elev || 0) - Number(currentNode.elev || 0))
-          if (dElev > 1) continue // Can only walk horizontally or step up/down by 1 block
 
-          var dist = Math.hypot(cand.x - currentNode.x, cand.y - currentNode.y)
-          if (dist > 5 && dist <= maxWalkReach) {
-            neighbors.push(cand)
+          // Animals stay strictly on the level they are on! They can only step up/down if stairs connect them.
+          if (dElev === 0) {
+            var dist = Math.hypot(cand.x - currentNode.x, cand.y - currentNode.y)
+            if (dist > 5 && dist <= maxWalkReach) {
+              neighbors.push(cand)
+            }
+          } else if (dElev === 1) {
+            // Can ONLY step up or down between levels if one of the nodes is stairs!
+            if (cand.isStairs || currentNode.isStairs) {
+              var dist = Math.hypot(cand.x - currentNode.x, cand.y - currentNode.y)
+              if (dist > 5 && dist <= maxWalkReach) {
+                neighbors.push(cand)
+              }
+            }
           }
         }
 

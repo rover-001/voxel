@@ -108,6 +108,10 @@ Item {
         topC = "#38bdf8"
         leftC = "#0284c7"
         rightC = "#0369a1"
+      } else if (root.blockType === "planks") {
+        topC = "#f59e0b"
+        leftC = "#b45309"
+        rightC = "#78350f"
       }
 
       var strokeC = "rgba(0,0,0,0.25)"
@@ -198,6 +202,72 @@ Item {
         ctx.moveTo(cx - s * 0.5 + ripOffset, cy - h - sy * 0.2)
         ctx.lineTo(cx + s * 0.4 + ripOffset, cy - h + sy * 0.3)
         ctx.stroke()
+        ctx.restore()
+      }
+
+      // Hardwood Planks: Interlocking timber floorboards with staggered seam joints
+      if (root.blockType === "planks") {
+        ctx.save()
+        ctx.beginPath()
+        ctx.moveTo(cx, cy - h - sy)
+        ctx.lineTo(cx + s, cy - h)
+        ctx.lineTo(cx, cy - h + sy)
+        ctx.lineTo(cx - s, cy - h)
+        ctx.closePath()
+        ctx.clip()
+
+        ctx.strokeStyle = "rgba(69, 26, 3, 0.45)"
+        ctx.lineWidth = 1.0
+
+        // Seam 1
+        ctx.beginPath()
+        ctx.moveTo(cx - s * 0.35, cy - h - sy * 0.65)
+        ctx.lineTo(cx + s * 0.65, cy - h + sy * 0.35)
+        ctx.stroke()
+
+        // Seam 2
+        ctx.beginPath()
+        ctx.moveTo(cx - s * 0.65, cy - h - sy * 0.35)
+        ctx.lineTo(cx + s * 0.35, cy - h + sy * 0.65)
+        ctx.stroke()
+
+        // Cross joints
+        ctx.beginPath()
+        ctx.moveTo(cx - s * 0.1, cy - h - sy * 0.1)
+        ctx.lineTo(cx - s * 0.25, cy - h + sy * 0.05)
+        ctx.stroke()
+
+        ctx.restore()
+      }
+
+      // Rustic Wood Log: Tree trunk concentric growth rings & bark edge
+      if (root.blockType === "wood") {
+        ctx.save()
+        ctx.beginPath()
+        ctx.moveTo(cx, cy - h - sy)
+        ctx.lineTo(cx + s, cy - h)
+        ctx.lineTo(cx, cy - h + sy)
+        ctx.lineTo(cx - s, cy - h)
+        ctx.closePath()
+        ctx.clip()
+
+        // Concentric annual tree rings
+        ctx.strokeStyle = "rgba(120, 53, 15, 0.4)"
+        ctx.lineWidth = 1.0
+        ctx.beginPath()
+        ctx.ellipse(cx, cy - h, s * 0.65, sy * 0.65, 0, 0, Math.PI * 2)
+        ctx.stroke()
+
+        ctx.beginPath()
+        ctx.ellipse(cx, cy - h, s * 0.35, sy * 0.35, 0, 0, Math.PI * 2)
+        ctx.stroke()
+
+        // Core pith center
+        ctx.fillStyle = "rgba(120, 53, 15, 0.55)"
+        ctx.beginPath()
+        ctx.ellipse(cx, cy - h, s * 0.12, sy * 0.12, 0, 0, Math.PI * 2)
+        ctx.fill()
+
         ctx.restore()
       }
     }
