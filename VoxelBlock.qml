@@ -105,9 +105,9 @@ Item {
         leftC = "#ea580c"
         rightC = "#c2410c"
       } else if (root.blockType === "water") {
-        topC = "#38bdf8"
-        leftC = "#0284c7"
-        rightC = "#0369a1"
+        topC = "#0284c7"
+        leftC = "#0369a1"
+        rightC = "#075985"
       } else if (root.blockType === "planks") {
         topC = "#f59e0b"
         leftC = "#b45309"
@@ -176,10 +176,8 @@ Item {
         ctx.fill()
       }
 
-      // Water animated translucent caustic surface shimmer
+      // Crystal Mountain Water: Serene layered surface with geometric voxel specular glints
       if (root.blockType === "water") {
-        var wWave = Math.sin(root.waterPhase * Math.PI * 2) * 0.12
-        var ripOffset = Math.sin(root.waterPhase * Math.PI * 2) * (s * 0.15)
         ctx.save()
         ctx.beginPath()
         ctx.moveTo(cx, cy - h - sy)
@@ -189,19 +187,73 @@ Item {
         ctx.closePath()
         ctx.clip()
 
-        // Central shimmer caustic
-        ctx.fillStyle = "rgba(224, 242, 254, " + (0.38 + wWave) + ")"
+        // 1. Diagonal soft water wave bands (shifting smoothly with waterPhase)
+        var pWave = root.waterPhase * Math.PI * 2
+        var waveShift = Math.sin(pWave) * (s * 0.12)
+
+        // Shimmer wave band 1
+        ctx.fillStyle = "rgba(56, 189, 248, 0.35)"
         ctx.beginPath()
-        ctx.arc(cx + ripOffset, cy - h, s * 0.45, 0, Math.PI * 2)
+        ctx.moveTo(cx - s + waveShift, cy - h)
+        ctx.lineTo(cx + waveShift, cy - h - sy)
+        ctx.lineTo(cx + s * 0.3 + waveShift, cy - h - sy * 0.7)
+        ctx.lineTo(cx - s * 0.7 + waveShift, cy - h + sy * 0.3)
+        ctx.closePath()
         ctx.fill()
 
-        // Ripple highlight streak
-        ctx.strokeStyle = "rgba(255, 255, 255, " + (0.55 + wWave) + ")"
-        ctx.lineWidth = 1.2
+        // Shimmer wave band 2
+        ctx.fillStyle = "rgba(125, 211, 252, 0.28)"
         ctx.beginPath()
-        ctx.moveTo(cx - s * 0.5 + ripOffset, cy - h - sy * 0.2)
-        ctx.lineTo(cx + s * 0.4 + ripOffset, cy - h + sy * 0.3)
-        ctx.stroke()
+        ctx.moveTo(cx - s * 0.3 - waveShift, cy - h + sy * 0.7)
+        ctx.lineTo(cx + s * 0.7 - waveShift, cy - h - sy * 0.3)
+        ctx.lineTo(cx + s - waveShift, cy - h)
+        ctx.lineTo(cx - waveShift, cy - h + sy)
+        ctx.closePath()
+        ctx.fill()
+
+        // 2. Crisp Voxel Diamond Sparkles (Sunlight Specular Glints)
+        function drawDiamondSparkle(sx, syOff, sz, alpha) {
+          var halfH = sz * 0.5
+          ctx.beginPath()
+          ctx.moveTo(sx, syOff - halfH)
+          ctx.lineTo(sx + sz, syOff)
+          ctx.lineTo(sx, syOff + halfH)
+          ctx.lineTo(sx - sz, syOff)
+          ctx.closePath()
+          ctx.fillStyle = "rgba(255, 255, 255, " + Math.max(0, Math.min(1.0, alpha)) + ")"
+          ctx.fill()
+        }
+
+        var sp1Alpha = 0.35 + Math.sin(pWave) * 0.45
+        var sp2Alpha = 0.35 + Math.sin(pWave + 2.0) * 0.45
+        var sp3Alpha = 0.35 + Math.sin(pWave + 4.0) * 0.45
+
+        drawDiamondSparkle(cx - s * 0.25, cy - h - sy * 0.15, s * 0.12, sp1Alpha)
+        drawDiamondSparkle(cx + s * 0.30, cy - h + sy * 0.10, s * 0.10, sp2Alpha)
+        drawDiamondSparkle(cx + s * 0.05, cy - h - sy * 0.40, s * 0.08, sp3Alpha)
+
+        ctx.restore()
+
+        // 3. Side face vertical depth caustics
+        ctx.save()
+        ctx.fillStyle = "rgba(186, 230, 253, 0.16)"
+        // Left face vertical water caustics
+        ctx.beginPath()
+        ctx.moveTo(cx - s * 0.6, cy - h + sy * 0.4)
+        ctx.lineTo(cx - s * 0.4, cy - h + sy * 0.6)
+        ctx.lineTo(cx - s * 0.4, cy + sy * 0.6)
+        ctx.lineTo(cx - s * 0.6, cy + sy * 0.4)
+        ctx.closePath()
+        ctx.fill()
+
+        // Right face vertical water caustics
+        ctx.beginPath()
+        ctx.moveTo(cx + s * 0.3, cy - h + sy * 0.7)
+        ctx.lineTo(cx + s * 0.5, cy - h + sy * 0.5)
+        ctx.lineTo(cx + s * 0.5, cy + sy * 0.5)
+        ctx.lineTo(cx + s * 0.3, cy + sy * 0.7)
+        ctx.closePath()
+        ctx.fill()
         ctx.restore()
       }
 

@@ -507,21 +507,6 @@ Item {
           ctx.arc(spPt.x, spPt.y, s * (0.06 + (1.0 - spProg) * 0.04), 0, Math.PI * 2)
           ctx.fill()
         }
-
-        // Expanding foam ripple rings at the base
-        var bPt = isoPt(0, 0.85, -1.6)
-        var fProg = (root.waterfallPhase + 0.3) % 1.0
-        var fRadius = s * (0.25 + fProg * 0.6)
-        var fAlpha = Math.sin(fProg * Math.PI) * 0.75
-        ctx.save()
-        ctx.beginPath()
-        ctx.translate(bPt.x, bPt.y)
-        ctx.scale(1.0, 0.5)
-        ctx.arc(0, 0, fRadius, 0, Math.PI * 2)
-        ctx.strokeStyle = "rgba(255, 255, 255, " + fAlpha + ")"
-        ctx.lineWidth = 1.4
-        ctx.stroke()
-        ctx.restore()
       }
 
       // ====================================================================
