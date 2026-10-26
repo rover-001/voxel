@@ -5,3 +5,6 @@
 *~
 *.swp
 *.bak
+.heald/
+AGENTS.md
+

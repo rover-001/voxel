@@ -18,7 +18,7 @@ Item {
 
   readonly property string animationLevel: {
     var svc = card && card.service ? card.service : Reg.get()
-    return svc && svc.animationLevel ? svc.animationLevel : "high"
+    return svc && svc.animationLevel ? svc.animationLevel : "low"
   }
 
   readonly property bool isClock: variant === "clock" || variant === "voxel-clock"

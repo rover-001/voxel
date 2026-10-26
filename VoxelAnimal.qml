@@ -43,12 +43,6 @@ Item {
   property bool isWalking: false
   property real walkStep: 0.0
   property real walkProgress: 0.0
-  NumberAnimation on walkStep {
-    from: 0; to: Math.PI * 8
-    duration: 1000
-    loops: Animation.Infinite
-    running: root.isAnimated && root.isWalking
-  }
   property real idlePhase: 0.0
   property real peckProgress: 0.0
   property real tailSwing: 0.0
@@ -56,10 +50,13 @@ Item {
 
   Timer {
     id: animTimer
-    interval: 50
+    interval: 80
     running: root.isAnimated && (root.isWalking || peckAnim.running)
     repeat: true
-    onTriggered: canvas.requestPaint()
+    onTriggered: {
+      if (root.isWalking) root.walkStep = (root.walkStep + interval / 1000.0 * Math.PI * 8.0) % (Math.PI * 8.0)
+      canvas.requestPaint()
+    }
   }
 
   onIsWalkingChanged: canvas.requestPaint()

@@ -1,5 +1,7 @@
 <div align="center">
 
+![Voxel Demo Showcase](assets/demo.gif)
+
 # 🌲 Voxel
 ### Interactive 3D Isometric Voxel Sandbox & Living World Builder for Linux
 
@@ -11,11 +13,7 @@
 
 <br/>
 
-![Voxel Demo Showcase](assets/demo.gif)
-
-### 🏝️ Modular Island Builder • 🐾 Living Wildlife AI • 🌸 Drifting Blossom Particles • ⏱️ Floating 3D Clock • ⚙️ Zero-Lag Performance Settings
-
-*▶ Live gameplay: building isometric islands, animal navigation, snap mechanics, tree sways & performance presets*
+### 🏝️ Modular Island Builder • 🐾 Living Wildlife AI • 🌸 Drifting Blossom Particles • ⏱️ Floating 3D Clock • ⚙️ Performance Settings
 
 <br/>
 
@@ -29,7 +27,7 @@
 
 ## 🌟 Overview
 
-Unlike heavy 3D game engines, **Voxel** renders lightweight isometric 3D voxel graphics using pure accelerated **QML / QtQuick Canvas**. Every block, creature, tree, and scenic prop lives natively on your Wayland desktop layer, consuming virtually zero CPU and GPU overhead while maintaining rock-solid 60 FPS animations.
+Unlike heavy 3D game engines, **Voxel** renders lightweight isometric 3D voxel graphics using pure accelerated **QML / QtQuick Canvas**. Every block, creature, tree, and scenic prop lives natively on your Wayland desktop layer, maintaining smooth animations and responsive desktop performance.
 
 Whether you want a tranquil Japanese zen garden with drifting cherry blossom petals, a crackling autumn campfire surrounded by sleeping foxes, or an expansive floating archipelago, Voxel gives you a modular sandbox directly on your screen.
 
@@ -77,7 +75,7 @@ Whether you want a tranquil Japanese zen garden with drifting cherry blossom pet
   - Dedicated **Settings** tab in the panel with three instant profiles:
     - **High**: Full visual fidelity — GPU tree sways, atmospheric weather particles, flickering flames, water splashes, and active wildlife AI.
     - **Low**: Lightweight & power-efficient — preserves animated wildlife and essential movement while idling heavy ambient particle emitters.
-    - **Off**: Absolute minimal footprint — freezes background repaints for 0% idle CPU overhead.
+    - **Off**: Absolute minimal footprint — freezes background repaints to minimize idle CPU usage.
 
 ---
 

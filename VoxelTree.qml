@@ -54,11 +54,17 @@ Item {
   readonly property bool hasParticles: root.active && root.visible && root.animationLevel === "high"
 
   property real swayAngle: 0.0
-  SequentialAnimation on swayAngle {
-    loops: Animation.Infinite
-    running: root.isAnimated
-    NumberAnimation { from: -1.4; to: 1.4; duration: root.isSakura ? 3200 : (root.isOak ? 4200 : (root.isPine ? 2400 : 3600)); easing.type: Easing.InOutSine }
-    NumberAnimation { from: 1.4; to: -1.4; duration: root.isSakura ? 3200 : (root.isOak ? 4200 : (root.isPine ? 2400 : 3600)); easing.type: Easing.InOutSine }
+  property real swayPhase: 0.0
+  Timer {
+    id: swayTimer
+    interval: 80
+    running: root.isAnimated && root.animationLevel === "high"
+    repeat: true
+    onTriggered: {
+      var period = root.isSakura ? 6400 : (root.isOak ? 8400 : (root.isPine ? 4800 : 7200))
+      root.swayPhase = (root.swayPhase + interval / period) % 1.0
+      root.swayAngle = Math.sin(root.swayPhase * Math.PI * 2.0) * 1.4
+    }
   }
 
   // Interactive rustle bounce pulse on hover/click
@@ -453,11 +459,16 @@ Item {
 
   // Falling leaf/petal particle cycle
   property real particlePhase: 0.0
-  NumberAnimation on particlePhase {
-    from: 0.0; to: 1.0
-    duration: root.isSakura ? 3400 : (root.isAutumn ? 2800 : (root.isPine ? 3200 : (root.isOak ? 2600 : 3800)))
-    loops: Animation.Infinite
+  Timer {
+    id: particlePhaseTimer
+    interval: 80
     running: root.hasParticles
+    repeat: true
+    onTriggered: {
+      var period = root.isSakura ? 3400 : (root.isAutumn ? 2800 : (root.isPine ? 3200 : (root.isOak ? 2600 : 3800)))
+      root.particlePhase = (root.particlePhase + interval / period) % 1.0
+      particleCanvas.requestPaint()
+    }
   }
 
   // Lightweight particle canvas — ONLY draws the 12 tiny leaf/petal particles
@@ -679,14 +690,6 @@ Item {
         }
       }
     }
-  }
-
-  Timer {
-    id: particleTimer
-    interval: 45 // ~22 FPS smooth falling leaf/petal animation
-    running: root.hasParticles
-    repeat: true
-    onTriggered: particleCanvas.requestPaint()
   }
 
   // Interactive rustle on mouse press

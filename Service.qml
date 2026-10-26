@@ -17,7 +17,9 @@ Item {
   property var widgets: []
   property var _layers: ({})
   property bool _initialized: false
-  property string animationLevel: "high"
+  // Low preserves interactive wildlife while avoiding continuous ambient canvas work.
+  // Users can still explicitly select High from Settings.
+  property string animationLevel: "low"
 
   function setAnimationLevel(lvl) {
     if (lvl !== "none" && lvl !== "low" && lvl !== "high") return

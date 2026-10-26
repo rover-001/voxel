@@ -34,56 +34,39 @@ Item {
 
   // ---- Animated Prop Loops -----------------------------------------------
 
-  // Lamp: Gentle breathing lantern glow
+  // Animated state is advanced by one capped timer below. Keeping these as
+  // plain properties avoids four independent per-frame QML animation drivers.
   property real lampGlow: 0.5
-  SequentialAnimation on lampGlow {
-    loops: Animation.Infinite
-    running: root.isAnimated && root.propType === "lamp"
-    NumberAnimation { from: 0.4; to: 0.85; duration: 1800; easing.type: Easing.InOutSine }
-    NumberAnimation { from: 0.85; to: 0.55; duration: 1200; easing.type: Easing.InOutSine }
-    NumberAnimation { from: 0.55; to: 0.95; duration: 1600; easing.type: Easing.InOutSine }
-    NumberAnimation { from: 0.95; to: 0.4; duration: 2000; easing.type: Easing.InOutSine }
-  }
-
-  // Fountain: Continuous water ripple & droplet spray loop
   property real waterPhase: 0.0
-  NumberAnimation on waterPhase {
-    from: 0.0; to: 1.0
-    duration: 2400
-    loops: Animation.Infinite
-    running: root.isAnimated && root.propType === "fountain"
-  }
-
-  // Campfire: Fast crackling flame flicker and rising smoke
   property real flamePhase: 0.0
-  NumberAnimation on flamePhase {
-    from: 0.0; to: 1.0
-    duration: 1200
-    loops: Animation.Infinite
-    running: root.isAnimated && root.propType === "campfire"
-  }
-
-  // Flowers: Gentle breeze petal sway
   property real flowerSway: 0.0
-  NumberAnimation on flowerSway {
-    from: 0.0; to: Math.PI * 2
-    duration: 3200
-    loops: Animation.Infinite
-    running: root.isAnimated && root.propType === "flowers"
-  }
+  property real animationPhase: 0.0
 
   readonly property bool isAnimatedProp: isAnimated && (propType === "campfire" || propType === "lamp" || propType === "fountain")
 
   Timer {
     id: animTimer
     interval: {
-      if (root.propType === "lamp") return root.isHighAnim ? 120 : 240
-      if (root.propType === "campfire") return root.isHighAnim ? 60 : 120
-      return root.isHighAnim ? 60 : 140
+      if (root.propType === "lamp") return root.isHighAnim ? 180 : 300
+      if (root.propType === "campfire") return root.isHighAnim ? 100 : 180
+      return root.isHighAnim ? 100 : 180
     }
     running: root.isAnimatedProp
     repeat: true
-    onTriggered: canvas.requestPaint()
+    onTriggered: {
+      var step = interval
+      if (root.propType === "lamp") {
+        root.animationPhase = (root.animationPhase + step / 8000.0) % 1.0
+        root.lampGlow = 0.675 + Math.sin(root.animationPhase * Math.PI * 2.0) * 0.275
+      } else if (root.propType === "fountain") {
+        root.waterPhase = (root.waterPhase + step / 2400.0) % 1.0
+      } else if (root.propType === "campfire") {
+        root.flamePhase = (root.flamePhase + step / 1200.0) % 1.0
+      } else if (root.propType === "flowers") {
+        root.flowerSway = (root.flowerSway + step / 3200.0 * Math.PI * 2.0) % (Math.PI * 2.0)
+      }
+      canvas.requestPaint()
+    }
   }
 
   Component.onCompleted: canvas.requestPaint()
