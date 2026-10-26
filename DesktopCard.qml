@@ -47,6 +47,7 @@ Item {
   height: implicitHeight
 
   property bool isClusterDragging: false
+  property bool isMagnetSnapped: false
 
   // Ground anchor center in desktop layer coordinates (exact integer coordinates)
   readonly property real groundCenterX: Math.round(card.x + card.width * 0.5)
@@ -54,7 +55,7 @@ Item {
     if (card.isBlock) return Math.round(card.y + card.height * (1.7 / 2.4))
     if (card.isAnimal) return Math.round(card.y + card.height * 0.78)
     if (card.isTree) return Math.round(card.y + card.height * (5.0 / 6.0))
-    if (card.isProp) return Math.round(card.y + card.height * (2.1 / 2.8))
+    if (card.isProp) return Math.round(card.y + card.height * 0.75)
     return Math.round(card.y + card.height * 0.72)
   }
 
@@ -93,7 +94,7 @@ Item {
   }
 
   transformOrigin: Item.Center
-  rotation: card.rotationAngle
+  rotation: (card.isProp || card.isBlock || card.isTree) ? 0 : card.rotationAngle
 
   function clampIntoScreen() {
     if (!card.screen) return
@@ -281,12 +282,12 @@ Item {
         card.textScale = snap.scale
       }
       var currentUnit = Style.space(8) * card.textScale
-      var finalW = card.isBlock ? (currentUnit * 2.4) : (card.isTree ? (currentUnit * 4.8) : (card.isProp ? (currentUnit * 2.4) : card.width))
-      var finalH = card.isBlock ? (currentUnit * 2.4) : (card.isTree ? (currentUnit * 7.2) : (card.isProp ? (currentUnit * 2.8) : card.height))
+      var finalW = card.isBlock ? (currentUnit * 2.4) : (card.isTree ? (currentUnit * 4.8) : (card.isProp ? (currentUnit * 3.6) : card.width))
+      var finalH = card.isBlock ? (currentUnit * 2.4) : (card.isTree ? (currentUnit * 7.2) : (card.isProp ? (currentUnit * 4.4) : card.height))
       var finalAnchorY = card.isBlock ? (finalH * (1.7 / 2.4))
         : (card.isAnimal ? (finalH * 0.78)
         : (card.isTree ? (finalH * (5.0 / 6.0))
-        : (card.isProp ? (finalH * (2.1 / 2.8)) : (finalH * 0.72))))
+        : (card.isProp ? (finalH * 0.75) : (finalH * 0.72))))
 
       card.x = Math.round(snap.targetCX - finalW * 0.5)
       card.y = Math.round(snap.targetCY - finalAnchorY)
@@ -313,13 +314,14 @@ Item {
       card.service.cardMoved(card.widgetId, x, y, card.elevation)
   }
 
-  // ---- Voxel Diorama / Block / Cloud / Animal -----------------------------
+  // ---- Voxel Diorama / Block / Cloud / Animal / Prop ---------------------
   VoxelDiorama {
     id: diorama
     card: card
     anchors.centerIn: parent
     variant: card.dioramaVariant
     widgetScale: card.textScale
+    propRotation: Math.round(((card.rotationAngle % 360) + 360) % 360 / 90) % 4
     active: true
     accentColor: Color.accent
     fgColor: Color.foreground
@@ -655,24 +657,29 @@ Item {
       var cardAnchorY = card.isBlock ? (card.height * (1.7 / 2.4))
         : (card.isAnimal ? (card.height * 0.78)
         : (card.isTree ? (card.height * (5.0 / 6.0))
-        : (card.isProp ? (card.height * (2.1 / 2.8)) : (card.height * 0.72))))
+        : (card.isProp ? (card.height * 0.75) : (card.height * 0.72))))
 
       var rawGCX = rawX + card.width * 0.5
       var rawGCY = rawY + cardAnchorY
 
-      // Live magnetic snapping while holding: preview exact snap slot in real-time
+      // Smooth magnetic snapping with hysteresis latching (prevents stutter & oscillation)
+      var snapThreshold = card.isMagnetSnapped ? 54 : 36
+
       if (dragger.isGroupDrag && card.activeCluster && card.activeCluster.length > 1) {
-        var snapGroup = card.getSnapSlot(rawGCX, rawGCY, card.activeCluster, 56)
+        var snapGroup = card.getSnapSlot(rawGCX, rawGCY, card.activeCluster, snapThreshold)
         var effDX = dx
         var effDY = dy
         var elevShift = 0
 
         if (snapGroup.found) {
+          card.isMagnetSnapped = true
           var snappedX = Math.round(snapGroup.targetCX - card.width * 0.5)
           var snappedY = Math.round(snapGroup.targetCY - cardAnchorY)
           effDX = snappedX - card.dragStartPos.x
           effDY = snappedY - card.dragStartPos.y
           elevShift = snapGroup.elevation - card.dragStartElevation
+        } else {
+          card.isMagnetSnapped = false
         }
 
         for (var i = 0; i < card.activeCluster.length; i++) {
@@ -689,19 +696,22 @@ Item {
           }
         }
       } else {
-        var snapSingle = card.getSnapSlot(rawGCX, rawGCY, [card], 56)
+        var snapSingle = card.getSnapSlot(rawGCX, rawGCY, [card], snapThreshold)
         if (snapSingle.found) {
+          card.isMagnetSnapped = true
           card.x = Math.round(snapSingle.targetCX - card.width * 0.5)
           card.y = Math.round(snapSingle.targetCY - cardAnchorY)
-          card.elevation = snapSingle.elevation
-          if (card.isBlock || card.isTree || card.isProp) card.textScale = snapSingle.scale
+          if (card.elevation !== snapSingle.elevation) card.elevation = snapSingle.elevation
+          if (card.isBlock || card.isTree || card.isProp) {
+            if (card.textScale !== snapSingle.scale) card.textScale = snapSingle.scale
+          }
         } else {
+          card.isMagnetSnapped = false
           card.x = rawX
           card.y = rawY
-          card.elevation = card.dragStartElevation
+          if (card.elevation !== card.dragStartElevation) card.elevation = card.dragStartElevation
         }
       }
-      if (card.layerWindow) card.layerWindow.updateClusterBounds()
     }
   }
 

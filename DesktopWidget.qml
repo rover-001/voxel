@@ -36,7 +36,7 @@ PanelWindow {
   }
 
   function updateClusterBounds() {
-    if (!desktopLayer.activeCluster || desktopLayer.activeCluster.length <= 1) {
+    if (!desktopLayer.activeCluster || desktopLayer.activeCluster.length === 0) {
       desktopLayer.clusterBounds = Qt.rect(0, 0, 0, 0)
       return
     }
@@ -54,11 +54,20 @@ PanelWindow {
   }
 
   property var clusterStartElevations: ({})
+  property rect clusterDragStartBounds: Qt.rect(0, 0, 0, 0)
+  property bool isClusterMagnetSnapped: false
 
   function startClusterDrag(scenePos) {
     desktopLayer.isMovingCluster = true
+    desktopLayer.isClusterMagnetSnapped = false
     clearClusterTimer.stop()
     desktopLayer.clusterDragStartPoint = scenePos
+    desktopLayer.clusterDragStartBounds = Qt.rect(
+      desktopLayer.clusterBounds.x,
+      desktopLayer.clusterBounds.y,
+      desktopLayer.clusterBounds.width,
+      desktopLayer.clusterBounds.height
+    )
     var starts = {}
     var startElevs = {}
     for (var i = 0; i < desktopLayer.activeCluster.length; i++) {
@@ -87,7 +96,7 @@ PanelWindow {
     var rootCardAnchorY = rootCard.isBlock ? (rootCard.height * (1.7 / 2.4))
       : (rootCard.isAnimal ? (rootCard.height * 0.78)
       : (rootCard.isTree ? (rootCard.height * (5.0 / 6.0))
-      : (rootCard.isProp ? (rootCard.height * (2.1 / 2.8)) : (rootCard.height * 0.72))))
+      : (rootCard.isProp ? (rootCard.height * 0.75) : (rootCard.height * 0.72))))
 
     var rawRootX = origRoot.x + dx
     var rawRootY = origRoot.y + dy
@@ -98,16 +107,20 @@ PanelWindow {
     var effDY = dy
     var elevShift = 0
 
-    // Live magnetic snapping while holding: preview exact snap slot in real-time
+    // Live magnetic snapping while holding: preview exact snap slot in real-time with hysteresis
     if (typeof rootCard.getSnapSlot === "function") {
-      var snap = rootCard.getSnapSlot(rawRootGCX, rawRootGCY, cluster, 56)
+      var snapThresh = desktopLayer.isClusterMagnetSnapped ? 54 : 36
+      var snap = rootCard.getSnapSlot(rawRootGCX, rawRootGCY, cluster, snapThresh)
       if (snap.found) {
+        desktopLayer.isClusterMagnetSnapped = true
         var snappedRootX = Math.round(snap.targetCX - rootCard.width * 0.5)
         var snappedRootY = Math.round(snap.targetCY - rootCardAnchorY)
         effDX = snappedRootX - origRoot.x
         effDY = snappedRootY - origRoot.y
         var rootOrigElev = desktopLayer.clusterStartElevations[rootCard.widgetId] || 0
         elevShift = snap.elevation - rootOrigElev
+      } else {
+        desktopLayer.isClusterMagnetSnapped = false
       }
     }
 
@@ -124,7 +137,14 @@ PanelWindow {
         c.elevation = Math.max(0, origElev + elevShift)
       }
     }
-    desktopLayer.updateClusterBounds()
+
+    // Smoothly shift cluster bounding box without expensive loop re-computation
+    desktopLayer.clusterBounds = Qt.rect(
+      Math.round(desktopLayer.clusterDragStartBounds.x + effDX),
+      Math.round(desktopLayer.clusterDragStartBounds.y + effDY),
+      desktopLayer.clusterDragStartBounds.width,
+      desktopLayer.clusterDragStartBounds.height
+    )
   }
 
   function endClusterDrag() {
@@ -149,6 +169,7 @@ PanelWindow {
     }
 
     desktopLayer.isMovingCluster = false
+    desktopLayer.isClusterMagnetSnapped = false
     desktopLayer.updateClusterBounds()
     desktopLayer.checkAndRestartClearTimer()
   }
@@ -158,18 +179,15 @@ PanelWindow {
     desktopLayer.activeHoveredCard = c
     clearClusterTimer.stop()
     var cl = c.getConnectedCluster()
-    if (cl && cl.length > 1) {
-      desktopLayer.activeCluster = cl
-      for (var id in desktopLayer.cards) {
-        var card = desktopLayer.cards[id]
-        if (card) {
-          card.inActiveCluster = (cl.indexOf(card) !== -1)
-        }
+    if (!cl || cl.length === 0) cl = [c]
+    desktopLayer.activeCluster = cl
+    for (var id in desktopLayer.cards) {
+      var card = desktopLayer.cards[id]
+      if (card) {
+        card.inActiveCluster = (cl.indexOf(card) !== -1)
       }
-      desktopLayer.updateClusterBounds()
-    } else {
-      desktopLayer.clearCluster()
     }
+    desktopLayer.updateClusterBounds()
   }
 
   function cardDeactivated(c) {
@@ -210,9 +228,31 @@ PanelWindow {
   function rotateCluster(direction) {
     var dir = (direction === undefined || direction === null) ? 1 : direction
     var cluster = desktopLayer.activeCluster || []
-    if (!cluster || cluster.length <= 1) return
+    if (!cluster || !cluster.length) {
+      if (desktopLayer.activeHoveredCard) cluster = [desktopLayer.activeHoveredCard]
+      else return
+    }
 
     clearClusterTimer.stop()
+
+    // Single item rotation (single block or prop like bench, lamp, fence, waterfall)
+    if (cluster.length === 1) {
+      var singleItem = cluster[0]
+      var rotStep = dir > 0 ? 90 : -90
+      var newAngle = ((Number(singleItem.rotationAngle || 0) + rotStep) % 360 + 360) % 360
+      singleItem.rotationAngle = newAngle
+      if (singleItem.snapAnim && typeof singleItem.snapAnim.restart === "function") {
+        singleItem.snapAnim.restart()
+      }
+      if (singleItem.service && typeof singleItem.service.cardRotated === "function") {
+        singleItem.service.cardRotated(singleItem.widgetId, newAngle)
+      } else if (singleItem.service && typeof singleItem.service.cardMoved === "function") {
+        singleItem.service.cardMoved(singleItem.widgetId, singleItem.x, singleItem.y, singleItem.elevation, newAngle)
+      }
+      desktopLayer.updateClusterBounds()
+      desktopLayer.checkAndRestartClearTimer()
+      return
+    }
 
     var s = Math.round((Style.space(8) * Math.max(1.0, cluster[0].textScale)) / 2) * 2
 
@@ -250,7 +290,7 @@ PanelWindow {
       var cardAnchorY = card.isBlock ? (card.height * (1.7 / 2.4))
         : (card.isAnimal ? (card.height * 0.78)
         : (card.isTree ? (card.height * (5.0 / 6.0))
-        : (card.isProp ? (card.height * (2.1 / 2.8)) : (card.height * 0.72))))
+        : (card.isProp ? (card.height * 0.75) : (card.height * 0.72))))
 
       var targetGCY = nFlatY - (Number(card.elevation || 0) * s)
       var finalX = Math.round(nx - card.width * 0.5)
@@ -259,11 +299,14 @@ PanelWindow {
       newCoords.push({ x: finalX, y: finalY })
     }
 
-    // Apply new positions simultaneously to all cards
+    // Apply new positions simultaneously to all cards, and rotate props/blocks
+    var rotDelta = dir > 0 ? 90 : -90
     for (var k = 0; k < cluster.length; k++) {
       var item = cluster[k]
       item.x = newCoords[k].x
       item.y = newCoords[k].y
+      var itemAngle = ((Number(item.rotationAngle || 0) + rotDelta) % 360 + 360) % 360
+      item.rotationAngle = itemAngle
       item.clampIntoScreen()
 
       if (item.snapAnim && typeof item.snapAnim.restart === "function") {
@@ -271,7 +314,7 @@ PanelWindow {
       }
 
       if (item.service && typeof item.service.cardMoved === "function") {
-        item.service.cardMoved(item.widgetId, item.x, item.y, item.elevation)
+        item.service.cardMoved(item.widgetId, item.x, item.y, item.elevation, itemAngle)
       }
     }
 

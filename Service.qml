@@ -114,7 +114,7 @@ Item {
     root.save()
   }
 
-  function cardMoved(id, nx, ny, elev) {
+  function cardMoved(id, nx, ny, elev, rot) {
     var list = root.widgets.slice()
     var changed = false
     for (var i = 0; i < list.length; i++) {
@@ -122,6 +122,23 @@ Item {
         list[i].x = Math.round(nx)
         list[i].y = Math.round(ny)
         if (typeof elev !== "undefined") list[i].elevation = Number(elev || 0)
+        if (typeof rot !== "undefined") list[i].rotation = Number(rot || 0)
+        changed = true
+        break
+      }
+    }
+    if (!changed) return
+    root.widgets = list
+    root.save()
+  }
+
+  function cardRotated(id, rot) {
+    rot = Number(rot) || 0
+    var list = root.widgets.slice()
+    var changed = false
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id && Number(list[i].rotation || 0) !== rot) {
+        list[i].rotation = rot
         changed = true
         break
       }

@@ -66,6 +66,13 @@ var ITEMS = [
     blockType: "lava",
     defaultScale: 3.6
   },
+  {
+    id: "voxel-block-water",
+    category: "blocks",
+    variant: "block-water",
+    blockType: "water",
+    defaultScale: 3.6
+  },
 
   // 2. Animated Voxel Animals (Chicken, Fox, Cat, Sheep, Pig)
   {
@@ -140,6 +147,13 @@ var ITEMS = [
     category: "props",
     variant: "prop-fence",
     propType: "fence",
+    defaultScale: 3.6
+  },
+  {
+    id: "voxel-prop-waterfall",
+    category: "props",
+    variant: "prop-waterfall",
+    propType: "waterfall",
     defaultScale: 3.6
   },
 

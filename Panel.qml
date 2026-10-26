@@ -392,6 +392,7 @@ Panel {
                   if (itm.propType === "campfire") return "🔥"
                   if (itm.propType === "flowers") return "🌺"
                   if (itm.propType === "fence") return "🪵"
+                  if (itm.propType === "waterfall") return "🌊"
                   if (itm.animalType === "fox") return "🦊"
                   if (itm.animalType === "cat") return "🐱"
                   if (itm.animalType === "sheep") return "🐑"

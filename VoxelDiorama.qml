@@ -17,6 +17,7 @@ Item {
   property color accentColor: Color.accent
   property bool active: true
   property string variant: "block-grass"
+  property int propRotation: 0
 
   readonly property bool isTree: variant.indexOf("tree-") === 0
     || variant.indexOf("voxel-tree-") === 0
@@ -56,6 +57,7 @@ Item {
     if (variant.indexOf("campfire") !== -1) return "campfire"
     if (variant.indexOf("flowers") !== -1) return "flowers"
     if (variant.indexOf("fence") !== -1) return "fence"
+    if (variant.indexOf("waterfall") !== -1) return "waterfall"
     return "bench"
   }
 
@@ -121,6 +123,7 @@ Item {
     active: root.active && visible
     widgetScale: root.widgetScale
     propType: root.propType
+    propRotation: root.propRotation
     fgColor: root.fgColor
     accentColor: root.accentColor
   }

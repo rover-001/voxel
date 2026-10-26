@@ -2,12 +2,13 @@ import QtQuick
 import qs.Commons
 
 // VoxelProp — Modular 3D isometric scenic props for desktop diorama worlds:
-// - bench: Cozy wooden park bench with wrought-iron frame
-// - lamp: Vintage streetlamp with warm animated breathing lantern glow
+// - bench: Cozy wooden park bench with wrought-iron frame (rotatable 360°)
+// - lamp: Vintage streetlamp with warm breathing lantern glow (generous headroom, zero clipping)
 // - fountain: Cobblestone fountain with animated water ripples and splash droplets
 // - campfire: Stone-ring firepit with animated flickering flames and rising embers
 // - flowers: Blooming multi-colored flower bed with gentle breeze sway
-// - fence: Rustic wooden post and rail barrier segment
+// - fence: Rustic wooden post and rail barrier segment (rotatable 360°)
+// - waterfall: Cascading waterfall with rushing veil, animated white-water streaks, and foot splash!
 // All props share the exact even-integer voxelUnit isometric grid as VoxelBlock.
 Item {
   id: root
@@ -17,12 +18,14 @@ Item {
   property color accentColor: Color.accent
   property bool active: true
   property string propType: "bench"
+  property int propRotation: 0
 
   // Unified even-integer voxel unit for seamless alignment with VoxelBlock
   readonly property real voxelUnit: Math.round((Style.space(8) * root.widgetScale) / 2) * 2
 
-  implicitWidth: Math.round((voxelUnit * 2.4) / 2) * 2
-  implicitHeight: Math.round((voxelUnit * 2.8) / 2) * 2
+  // Expanded canvas dimensions to provide generous headroom for tall lamps and waterfall drops
+  implicitWidth: Math.round((voxelUnit * 3.6) / 2) * 2
+  implicitHeight: Math.round((voxelUnit * 4.4) / 2) * 2
   width: implicitWidth
   height: implicitHeight
 
@@ -66,12 +69,23 @@ Item {
     running: root.active && root.visible && root.propType === "flowers"
   }
 
+  // Waterfall: Rapid water curtain and churning foam rapids loop
+  property real waterfallPhase: 0.0
+  NumberAnimation on waterfallPhase {
+    from: 0.0; to: 1.0
+    duration: 900
+    loops: Animation.Infinite
+    running: root.active && root.visible && root.propType === "waterfall"
+  }
+
   onPropTypeChanged: canvas.requestPaint()
+  onPropRotationChanged: canvas.requestPaint()
   onVoxelUnitChanged: canvas.requestPaint()
   onLampGlowChanged: canvas.requestPaint()
   onWaterPhaseChanged: canvas.requestPaint()
   onFlamePhaseChanged: canvas.requestPaint()
   onFlowerSwayChanged: canvas.requestPaint()
+  onWaterfallPhaseChanged: canvas.requestPaint()
 
   Canvas {
     id: canvas
@@ -84,19 +98,43 @@ Item {
 
       var s = root.voxelUnit
       var cx = Math.round(width * 0.5)
-      // Ground anchor contact at 2.1 / 2.8 (matches card.groundCenterY)
-      var cy = Math.round(height * (2.1 / 2.8))
+      // Ground anchor contact at 0.75 height (matches card.groundCenterY)
+      var cy = Math.round(height * 0.75)
       var sy = Math.round(s * 0.5)
+
+      // 3D Isometric Coordinate Rotation Helper (0°, 90°, 180°, 270°)
+      function rotUV(u, v) {
+        var r = ((Math.round(root.propRotation) % 4) + 4) % 4
+        if (r === 1) return { u: -v, v: u }
+        if (r === 2) return { u: -u, v: -v }
+        if (r === 3) return { u: v, v: -u }
+        return { u: u, v: v }
+      }
 
       // Isometric projection helper: (u = down-right, v = down-left, w = up)
       function isoPt(u, v, w) {
+        var r = rotUV(u, v)
         return {
-          x: cx + (u - v) * (s * 0.5),
-          y: cy + (u + v) * (sy * 0.5) - w * (s * 0.5)
+          x: cx + (r.u - r.v) * (s * 0.5),
+          y: cy + (r.u + r.v) * (sy * 0.5) - w * (s * 0.5)
         }
       }
 
-      // Draw isometric 3D voxel box
+      // Draw wall helper with automatic back-face culling & direction-based shading
+      function drawWall(t1, t2, b2, b1, col, strokeC) {
+        if (t2.x <= t1.x) return // Back-facing wall, culled
+        ctx.beginPath()
+        ctx.moveTo(t1.x, t1.y)
+        ctx.lineTo(t2.x, t2.y)
+        ctx.lineTo(b2.x, b2.y)
+        ctx.lineTo(b1.x, b1.y)
+        ctx.closePath()
+        ctx.fillStyle = col
+        ctx.fill()
+        if (strokeC) { ctx.strokeStyle = strokeC; ctx.lineWidth = 0.6; ctx.stroke(); }
+      }
+
+      // Draw isometric 3D voxel box with full 360° rotation support
       function drawIsoBox(u, v, w, du, dv, dw, topC, leftC, rightC, strokeC) {
         var p00 = isoPt(u, v, w + dw)
         var p10 = isoPt(u + du, v, w + dw)
@@ -108,6 +146,12 @@ Item {
         var b11 = isoPt(u + du, v + dv, w)
         var b01 = isoPt(u, v + dv, w)
 
+        // 4 Clockwise side walls (automatically rendered if front-facing)
+        drawWall(p01, p11, b11, b01, (p11.y > p01.y) ? rightC : leftC, strokeC)
+        drawWall(p11, p10, b10, b11, (p10.y > p11.y) ? rightC : leftC, strokeC)
+        drawWall(p10, p00, b00, b10, (p00.y > p10.y) ? rightC : leftC, strokeC)
+        drawWall(p00, p01, b01, b00, (p01.y > p00.y) ? rightC : leftC, strokeC)
+
         // Top face
         ctx.beginPath()
         ctx.moveTo(p00.x, p00.y)
@@ -118,34 +162,12 @@ Item {
         ctx.fillStyle = topC
         ctx.fill()
         if (strokeC) { ctx.strokeStyle = strokeC; ctx.lineWidth = 0.6; ctx.stroke(); }
-
-        // Left face
-        ctx.beginPath()
-        ctx.moveTo(p01.x, p01.y)
-        ctx.lineTo(p11.x, p11.y)
-        ctx.lineTo(b11.x, b11.y)
-        ctx.lineTo(b01.x, b01.y)
-        ctx.closePath()
-        ctx.fillStyle = leftC
-        ctx.fill()
-        if (strokeC) { ctx.strokeStyle = strokeC; ctx.lineWidth = 0.6; ctx.stroke(); }
-
-        // Right face
-        ctx.beginPath()
-        ctx.moveTo(p11.x, p11.y)
-        ctx.lineTo(p10.x, p10.y)
-        ctx.lineTo(b10.x, b10.y)
-        ctx.lineTo(b11.x, b11.y)
-        ctx.closePath()
-        ctx.fillStyle = rightC
-        ctx.fill()
-        if (strokeC) { ctx.strokeStyle = strokeC; ctx.lineWidth = 0.6; ctx.stroke(); }
       }
 
       var stroke = "rgba(0,0,0,0.22)"
 
       // ====================================================================
-      // 1. BENCH
+      // 1. BENCH (ROTATABLE)
       // ====================================================================
       if (root.propType === "bench") {
         var ironTop = "#475569"
@@ -184,7 +206,7 @@ Item {
       }
 
       // ====================================================================
-      // 2. LAMP (LANTERN POST)
+      // 2. LAMP (LANTERN POST with NO CLIPPING & ROTATABLE)
       // ====================================================================
       else if (root.propType === "lamp") {
         var stoneT = "#64748b"
@@ -215,7 +237,7 @@ Item {
         var glowR = s * (1.1 + root.lampGlow * 0.25)
         var lanternCenter = isoPt(0, 0, 2.7)
 
-        // Radial warm light emission
+        // Radial warm light emission (ample headroom inside 4.4s canvas)
         var radGrad = ctx.createRadialGradient(lanternCenter.x, lanternCenter.y, s * 0.2, lanternCenter.x, lanternCenter.y, glowR)
         radGrad.addColorStop(0, "rgba(254, 240, 138, " + (0.45 * glowAlpha) + ")")
         radGrad.addColorStop(0.5, "rgba(251, 191, 36, " + (0.25 * glowAlpha) + ")")
@@ -397,9 +419,7 @@ Item {
         var stem1U = 0.0 + sway
         var stem1V = -0.1
         drawIsoBox(stem1U - 0.05, stem1V - 0.05, 0.3, 0.1, 0.1, 0.6, leafT, leafL, leafR, null)
-        // Blossom petals
         drawIsoBox(stem1U - 0.22, stem1V - 0.22, 0.85, 0.44, 0.44, 0.22, "#f43f5e", "#e11d48", "#be123c", stroke)
-        // Center pollen stamen
         drawIsoBox(stem1U - 0.1, stem1V - 0.1, 1.05, 0.2, 0.2, 0.1, "#facc15", "#eab308", "#ca8a04", null)
 
         // Flower 2: Bright Yellow Tulip (Left)
@@ -422,7 +442,7 @@ Item {
       }
 
       // ====================================================================
-      // 6. FENCE (POST AND RAIL BARRIER)
+      // 6. FENCE (POST AND RAIL BARRIER - ROTATABLE)
       // ====================================================================
       else if (root.propType === "fence") {
         var fWoodT = "#d97706"
@@ -431,12 +451,10 @@ Item {
 
         // Post 1 (Left vertical post)
         drawIsoBox(-0.75, -0.14, 0, 0.28, 0.28, 1.25, fWoodT, fWoodL, fWoodR, stroke)
-        // Post 1 Chamfered Cap
         drawIsoBox(-0.70, -0.10, 1.25, 0.18, 0.18, 0.12, fWoodT, fWoodL, fWoodR, stroke)
 
         // Post 2 (Right vertical post)
         drawIsoBox( 0.47, -0.14, 0, 0.28, 0.28, 1.25, fWoodT, fWoodL, fWoodR, stroke)
-        // Post 2 Chamfered Cap
         drawIsoBox( 0.52, -0.10, 1.25, 0.18, 0.18, 0.12, fWoodT, fWoodL, fWoodR, stroke)
 
         // Lower Connecting Rail
@@ -444,6 +462,84 @@ Item {
 
         // Upper Connecting Rail
         drawIsoBox(-0.75, -0.06, 0.82, 1.5, 0.12, 0.18, fWoodT, fWoodL, fWoodR, stroke)
+      }
+
+      // ====================================================================
+      // 7. WATERFALL (CASCADING WATER VEIL & FOAM RAPIDS - ROTATABLE!)
+      // ====================================================================
+      else if (root.propType === "waterfall") {
+        var wTop = "#38bdf8"
+        var wLeft = "#0284c7"
+        var wRight = "#0369a1"
+        var wFoam = "#e0f2fe"
+
+        // Upper water inflow stream across the top block face
+        drawIsoBox(-0.7, -0.7, 0, 1.4, 1.4, 0.12, wTop, wLeft, wRight, null)
+
+        // Animated surface currents on inflow stream
+        var streamOffset = (root.waterfallPhase * s * 0.4)
+        var sP1 = isoPt(-0.5, -0.3 + (root.waterfallPhase * 0.4), 0.13)
+        var sP2 = isoPt( 0.3, -0.3 + (root.waterfallPhase * 0.4), 0.13)
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.65)"
+        ctx.lineWidth = 1.2
+        ctx.beginPath()
+        ctx.moveTo(sP1.x, sP1.y)
+        ctx.lineTo(sP2.x, sP2.y)
+        ctx.stroke()
+
+        // Cliff crest / curling water spillway lip
+        drawIsoBox(-0.75, 0.55, 0.02, 1.5, 0.22, 0.16, "#7dd3fc", wLeft, wRight, null)
+
+        // Cascading vertical water curtain pouring DOWN 1.6 block units below the rim
+        drawIsoBox(-0.75, 0.72, -1.6, 1.5, 0.14, 1.66, "#7dd3fc", "#0284c7", "#0369a1", null)
+
+        // Animated rushing white-water streaks cascading down the fall
+        for (var strk = 0; strk < 4; strk++) {
+          var strkProg = (root.waterfallPhase * 2.2 + strk * 0.25) % 1.0
+          var strkU = -0.55 + strk * 0.35
+          var strkW = 0.1 - strkProg * 1.65
+          var strkPt1 = isoPt(strkU, 0.79, strkW)
+          var strkPt2 = isoPt(strkU, 0.79, strkW - 0.35)
+
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.85)"
+          ctx.lineWidth = 1.8
+          ctx.beginPath()
+          ctx.moveTo(strkPt1.x, strkPt1.y)
+          ctx.lineTo(strkPt2.x, strkPt2.y)
+          ctx.stroke()
+        }
+
+        // Churning Splash Pool & Mist Clouds at the base of the waterfall
+        drawIsoBox(-0.85, 0.60, -1.65, 1.7, 0.6, 0.14, wFoam, "#38bdf8", "#0284c7", null)
+
+        // Bouncing water splash droplets & mist
+        for (var sp = 0; sp < 4; sp++) {
+          var spProg = (root.waterfallPhase * 2.5 + sp * 0.25) % 1.0
+          var spU = -0.4 + sp * 0.26 + Math.sin(spProg * Math.PI) * 0.15
+          var spV = 0.85 + Math.cos(spProg * Math.PI) * 0.15
+          var spH = -1.55 + Math.sin(spProg * Math.PI) * 0.4
+          var spPt = isoPt(spU, spV, spH)
+
+          ctx.fillStyle = "rgba(240, 249, 255, " + (1.0 - spProg * 0.6) + ")"
+          ctx.beginPath()
+          ctx.arc(spPt.x, spPt.y, s * (0.06 + (1.0 - spProg) * 0.04), 0, Math.PI * 2)
+          ctx.fill()
+        }
+
+        // Expanding foam ripple rings at the base
+        var bPt = isoPt(0, 0.85, -1.6)
+        var fProg = (root.waterfallPhase + 0.3) % 1.0
+        var fRadius = s * (0.25 + fProg * 0.6)
+        var fAlpha = Math.sin(fProg * Math.PI) * 0.75
+        ctx.save()
+        ctx.beginPath()
+        ctx.translate(bPt.x, bPt.y)
+        ctx.scale(1.0, 0.5)
+        ctx.arc(0, 0, fRadius, 0, Math.PI * 2)
+        ctx.strokeStyle = "rgba(255, 255, 255, " + fAlpha + ")"
+        ctx.lineWidth = 1.4
+        ctx.stroke()
+        ctx.restore()
       }
     }
   }
