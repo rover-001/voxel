@@ -5,10 +5,17 @@ var CATEGORIES = [
   { id: "blocks", name: "BLOCKS" },
   { id: "trees", name: "TREES" },
   { id: "creatures", name: "ANIMALS" },
-  { id: "props", name: "PROPS" }
+  { id: "props", name: "PROPS" },
+  { id: "words", name: "WORDS" }
 ];
 
 var ITEMS = [
+  {
+    id: "voxel-word-rover",
+    category: "words",
+    variant: "word-rover",
+    defaultScale: 4.2
+  },
   // 1. Modular Building Blocks (Clip/Snap together!)
   {
     id: "voxel-block-grass",

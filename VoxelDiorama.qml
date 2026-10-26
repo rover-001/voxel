@@ -32,8 +32,9 @@ Item {
     || variant === "cat"
     || variant === "sheep"
     || variant === "pig"
+  readonly property bool isWord: variant === "word-rover" || variant === "voxel-word-rover"
 
-  readonly property bool isBlock: !isTree && !isCloud && !isAnimal && !isProp
+  readonly property bool isBlock: !isTree && !isCloud && !isAnimal && !isProp && !isWord
 
   readonly property string treeType: {
     if (variant.indexOf("sakura") !== -1) return "sakura"
@@ -75,6 +76,7 @@ Item {
     if (isCloud) return cloudFace.width
     if (isAnimal) return animalFace.width
     if (isProp) return propFace.width
+    if (isWord) return wordFace.width
     return blockFace.width
   }
 
@@ -83,6 +85,7 @@ Item {
     if (isCloud) return cloudFace.height
     if (isAnimal) return animalFace.height
     if (isProp) return propFace.height
+    if (isWord) return wordFace.height
     return blockFace.height
   }
 
@@ -127,6 +130,16 @@ Item {
     widgetScale: root.widgetScale
     propType: root.propType
     propRotation: root.propRotation
+    fgColor: root.fgColor
+    accentColor: root.accentColor
+  }
+
+  VoxelWord {
+    id: wordFace
+    anchors.centerIn: parent
+    visible: root.isWord
+    active: root.active && visible
+    widgetScale: root.widgetScale
     fgColor: root.fgColor
     accentColor: root.accentColor
   }

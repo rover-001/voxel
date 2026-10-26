@@ -16,7 +16,7 @@ Item {
   required property string widgetStyle
   required property var screen
 
-  property real textScale: isBlock ? 3.6 : 2.2
+  property real textScale: isBlock || isWord ? 3.6 : 2.2
   property real rotationAngle: 0
   property bool locked: false
   property bool selected: false
@@ -41,6 +41,7 @@ Item {
     || dioramaVariant === "cat"
     || dioramaVariant === "sheep"
     || dioramaVariant === "pig"
+  readonly property bool isWord: dioramaVariant === "word-rover" || dioramaVariant === "voxel-word-rover"
 
   implicitWidth: diorama.width
   implicitHeight: diorama.height
