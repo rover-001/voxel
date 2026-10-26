@@ -34,15 +34,35 @@ Item {
   readonly property bool isPig: animalType === "pig" || animalType === "voxel-animal-pig"
   readonly property bool isChicken: !isFox && !isCat && !isSheep && !isPig
 
+  property string animationLevel: "high"
+  readonly property bool isAnimated: root.active && root.visible && root.animationLevel !== "none"
+  readonly property bool isHighAnim: root.active && root.visible && root.animationLevel === "high"
+
   // Dynamic animation states
   property real facing: 1.0 // +1 facing right, -1 facing left
   property bool isWalking: false
-  readonly property real walkStep: 0.0
+  property real walkStep: 0.0
   property real walkProgress: 0.0
-  readonly property real idlePhase: 0.0
-  readonly property real peckProgress: 0.0
-  readonly property real tailSwing: 0.0
+  NumberAnimation on walkStep {
+    from: 0; to: Math.PI * 8
+    duration: 1000
+    loops: Animation.Infinite
+    running: root.isAnimated && root.isWalking
+  }
+  property real idlePhase: 0.0
+  property real peckProgress: 0.0
+  property real tailSwing: 0.0
   property bool isSitting: false
+
+  Timer {
+    id: animTimer
+    interval: 50
+    running: root.isAnimated && (root.isWalking || peckAnim.running)
+    repeat: true
+    onTriggered: canvas.requestPaint()
+  }
+
+  onIsWalkingChanged: canvas.requestPaint()
 
   // Chicken pecking animation
   SequentialAnimation {
@@ -77,10 +97,12 @@ Item {
           root.card.elevation = root.targetElev
         }
         // Post-walk idle action
-        if (root.isFox || root.isCat) {
+        if (root.isChicken) {
+          peckAnim.restart()
+        } else if (root.isFox || root.isCat) {
           root.isSitting = (Math.random() > 0.45)
         }
-        wanderTimer.interval = 18000 + Math.random() * 25000
+        wanderTimer.interval = 3200 + Math.random() * 4200
         wanderTimer.restart()
       }
     }
@@ -98,8 +120,8 @@ Item {
   // Autonomous wandering AI on player-placed blocks
   Timer {
     id: wanderTimer
-    interval: 18000 + Math.random() * 25000
-    running: root.active && !root.isWalking
+    interval: 3200 + Math.random() * 4200
+    running: root.isAnimated && !root.isWalking
     repeat: false
     onTriggered: root.stepToAdjacentBlock()
   }
@@ -249,14 +271,26 @@ Item {
     // STRICT SAFETY INVARIANT: If no connected surfaces exist, DO NOT WALK INTO THE SKY!
     // The animal remains safely anchored on its block and performs idle animations.
     root.facing = -root.facing
-    if (root.isFox || root.isCat) root.isSitting = !root.isSitting
-    wanderTimer.interval = 18000 + Math.random() * 25000
+    if (root.isChicken) {
+      peckAnim.restart()
+    } else if (root.isFox || root.isCat) {
+      root.isSitting = !root.isSitting
+    }
+    wanderTimer.interval = 3200 + Math.random() * 4200
     wanderTimer.restart()
   }
 
-  Component.onCompleted: canvas.requestPaint()
+  Component.onCompleted: {
+    canvas.requestPaint()
+    wanderTimer.interval = 1200 + Math.random() * 2000
+    wanderTimer.restart()
+  }
   onFacingChanged: canvas.requestPaint()
   onIsSittingChanged: canvas.requestPaint()
+  onAnimationLevelChanged: {
+    canvas.requestPaint()
+    if (root.isAnimated && !wanderTimer.running) wanderTimer.restart()
+  }
 
   Canvas {
     id: canvas

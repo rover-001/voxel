@@ -29,6 +29,7 @@ PanelWindow {
   function checkAndRestartClearTimer() {
     if (desktopLayer.isMovingCluster) return
     if (desktopLayer.activeHoveredCard) return
+    if (desktopLayer.outerBorderHovered) return
     clearClusterTimer.restart()
   }
 
@@ -196,6 +197,7 @@ PanelWindow {
 
   function clearCluster() {
     if (desktopLayer.isMovingCluster) return
+    if (desktopLayer.outerBorderHovered) return
     if (desktopLayer.selectedId && desktopLayer.cards[desktopLayer.selectedId]) return
     desktopLayer.activeCluster = []
     for (var id in desktopLayer.cards) {
@@ -322,10 +324,10 @@ PanelWindow {
 
   Timer {
     id: clearClusterTimer
-    interval: 220
+    interval: 500
     repeat: false
     onTriggered: {
-      if (!desktopLayer.activeHoveredCard && !desktopLayer.isMovingCluster) {
+      if (!desktopLayer.activeHoveredCard && !desktopLayer.isMovingCluster && !desktopLayer.outerBorderHovered) {
         desktopLayer.hoveredBorderStrips = 0
         desktopLayer.selectedId = ""
         desktopLayer.clearCluster()
@@ -346,7 +348,16 @@ PanelWindow {
     id: clearSelectArea
     anchors.fill: parent
     acceptedButtons: Qt.LeftButton | Qt.RightButton
-    onClicked: {
+    onClicked: function(mouse) {
+      if (desktopLayer.isMovingCluster || desktopLayer.outerBorderHovered) return
+      if (desktopLayer.activeCluster && desktopLayer.activeCluster.length > 0) {
+        var pad = desktopLayer.clusterPadding + 16
+        var b = desktopLayer.clusterBounds
+        if (mouse.x >= (b.x - pad) && mouse.x <= (b.x + b.width + pad) &&
+            mouse.y >= (b.y - pad) && mouse.y <= (b.y + b.height + pad)) {
+          return
+        }
+      }
       desktopLayer.selectedId = ""
       desktopLayer.clearCluster()
     }

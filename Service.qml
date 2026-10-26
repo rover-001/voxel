@@ -17,6 +17,14 @@ Item {
   property var widgets: []
   property var _layers: ({})
   property bool _initialized: false
+  property string animationLevel: "high"
+
+  function setAnimationLevel(lvl) {
+    if (lvl !== "none" && lvl !== "low" && lvl !== "high") return
+    if (root.animationLevel === lvl) return
+    root.animationLevel = lvl
+    root.save()
+  }
 
   readonly property int widgetCount: widgets.length
 
@@ -48,6 +56,11 @@ Item {
     function clear(): string {
       root.clearAll()
       return "ok"
+    }
+
+    function setAnimation(lvl: string): string {
+      root.setAnimationLevel(lvl)
+      return root.animationLevel
     }
   }
 
@@ -269,7 +282,10 @@ Item {
   // ---- Persistence ----
 
   function canonical() {
-    return JSON.stringify({ widgets: root.widgets }, null, 2)
+    return JSON.stringify({
+      animationLevel: root.animationLevel,
+      widgets: root.widgets
+    }, null, 2)
   }
 
   function loadFromText(text) {
@@ -280,6 +296,9 @@ Item {
       parsed = JSON.parse(raw)
     } catch (e) {
       return
+    }
+    if (parsed && parsed.animationLevel) {
+      root.animationLevel = parsed.animationLevel
     }
     var arr = parsed ? (parsed.widgets || parsed) : []
     if (!Array.isArray(arr)) return
@@ -302,7 +321,7 @@ Item {
     }
 
     // Skip redundant reloads triggered by our own writes.
-    if (root.widgets.length === list.length && root.canonical() === JSON.stringify({ widgets: list }, null, 2)) {
+    if (root.widgets.length === list.length && root.canonical() === JSON.stringify({ animationLevel: root.animationLevel, widgets: list }, null, 2)) {
       root._initialized = true
       return
     }

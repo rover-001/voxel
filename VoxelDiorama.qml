@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.Commons
+import "Registry.js" as Reg
 
 // VoxelDiorama — Lightweight Host for 3D isometric voxel entities.
 // Uses a dynamic Loader so each card only instantiates its specific visual component.
@@ -14,6 +15,11 @@ Item {
   property bool active: true
   property string variant: "block-grass"
   property int propRotation: 0
+
+  readonly property string animationLevel: {
+    var svc = card && card.service ? card.service : Reg.get()
+    return svc && svc.animationLevel ? svc.animationLevel : "high"
+  }
 
   readonly property bool isClock: variant === "clock" || variant === "voxel-clock"
   readonly property bool isTree: variant.indexOf("tree-") === 0
@@ -101,6 +107,7 @@ Item {
       fgColor: root.fgColor
       accentColor: root.accentColor
       active: root.active
+      animationLevel: root.animationLevel
     }
   }
 
@@ -123,6 +130,7 @@ Item {
       fgColor: root.fgColor
       accentColor: root.accentColor
       active: root.active
+      animationLevel: root.animationLevel
     }
   }
 
@@ -135,6 +143,7 @@ Item {
       fgColor: root.fgColor
       accentColor: root.accentColor
       active: root.active
+      animationLevel: root.animationLevel
     }
   }
 

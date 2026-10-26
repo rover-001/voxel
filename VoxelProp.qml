@@ -19,6 +19,10 @@ Item {
   property string propType: "bench"
   property int propRotation: 0
 
+  property string animationLevel: "high"
+  readonly property bool isAnimated: root.active && root.visible && root.animationLevel !== "none"
+  readonly property bool isHighAnim: root.active && root.visible && root.animationLevel === "high"
+
   // Unified even-integer voxel unit for seamless alignment with VoxelBlock
   readonly property real voxelUnit: Math.round((Style.space(8) * root.widgetScale) / 2) * 2
 
@@ -30,15 +34,63 @@ Item {
 
   // ---- Animated Prop Loops -----------------------------------------------
 
-  readonly property real lampGlow: 0.8
-  readonly property real waterPhase: 0.3
-  readonly property real flamePhase: 0.4
-  readonly property real flowerSway: 0.0
+  // Lamp: Gentle breathing lantern glow
+  property real lampGlow: 0.5
+  SequentialAnimation on lampGlow {
+    loops: Animation.Infinite
+    running: root.isAnimated && root.propType === "lamp"
+    NumberAnimation { from: 0.4; to: 0.85; duration: 1800; easing.type: Easing.InOutSine }
+    NumberAnimation { from: 0.85; to: 0.55; duration: 1200; easing.type: Easing.InOutSine }
+    NumberAnimation { from: 0.55; to: 0.95; duration: 1600; easing.type: Easing.InOutSine }
+    NumberAnimation { from: 0.95; to: 0.4; duration: 2000; easing.type: Easing.InOutSine }
+  }
+
+  // Fountain: Continuous water ripple & droplet spray loop
+  property real waterPhase: 0.0
+  NumberAnimation on waterPhase {
+    from: 0.0; to: 1.0
+    duration: 2400
+    loops: Animation.Infinite
+    running: root.isAnimated && root.propType === "fountain"
+  }
+
+  // Campfire: Fast crackling flame flicker and rising smoke
+  property real flamePhase: 0.0
+  NumberAnimation on flamePhase {
+    from: 0.0; to: 1.0
+    duration: 1200
+    loops: Animation.Infinite
+    running: root.isAnimated && root.propType === "campfire"
+  }
+
+  // Flowers: Gentle breeze petal sway
+  property real flowerSway: 0.0
+  NumberAnimation on flowerSway {
+    from: 0.0; to: Math.PI * 2
+    duration: 3200
+    loops: Animation.Infinite
+    running: root.isAnimated && root.propType === "flowers"
+  }
+
+  readonly property bool isAnimatedProp: isAnimated && (propType === "campfire" || propType === "lamp" || propType === "fountain")
+
+  Timer {
+    id: animTimer
+    interval: {
+      if (root.propType === "lamp") return root.isHighAnim ? 120 : 240
+      if (root.propType === "campfire") return root.isHighAnim ? 60 : 120
+      return root.isHighAnim ? 60 : 140
+    }
+    running: root.isAnimatedProp
+    repeat: true
+    onTriggered: canvas.requestPaint()
+  }
 
   Component.onCompleted: canvas.requestPaint()
   onPropTypeChanged: canvas.requestPaint()
   onPropRotationChanged: canvas.requestPaint()
   onVoxelUnitChanged: canvas.requestPaint()
+  onAnimationLevelChanged: canvas.requestPaint()
 
   Canvas {
     id: canvas

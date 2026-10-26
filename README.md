@@ -1,7 +1,7 @@
 <div align="center">
 
-# 🌲 Voxel Desktop Diorama
-### Interactive 3D Isometric Voxel Sandbox & Living World Builder for Linux Desktops
+# 🌲 Voxel
+### Interactive 3D Isometric Voxel Sandbox & Living World Builder for Linux
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Donate-yellow.svg?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/rover01)
 [![Linux](https://img.shields.io/badge/Platform-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://kernel.org)
@@ -11,9 +11,11 @@
 
 <br/>
 
-![Voxel Desktop Demo Walkthrough](assets/demo.gif)
+![Voxel Demo Showcase](assets/demo.gif)
 
-*▶ Live gameplay: building isometric dioramas, animal navigation, snap mechanics & floating voxel clock*
+### 🏝️ Modular Island Builder • 🐾 Living Wildlife AI • 🌸 Drifting Blossom Particles • ⏱️ Floating 3D Clock • ⚙️ Zero-Lag Performance Settings
+
+*▶ Live gameplay: building isometric islands, animal navigation, snap mechanics, tree sways & performance presets*
 
 <br/>
 
@@ -70,6 +72,12 @@ Whether you want a tranquil Japanese zen garden with drifting cherry blossom pet
   - Multi-block selection bounding outline to move entire floating islands together at once.
   - Synchronized cluster elevation shifting and 360° structure rotation.
   - Intelligent spawn placement: new items spawn into a clean staging zone without colliding with existing islands.
+
+- ⚙️ **Animation Performance Profiles**:
+  - Dedicated **Settings** tab in the panel with three instant profiles:
+    - **High**: Full visual fidelity — GPU tree sways, atmospheric weather particles, flickering flames, water splashes, and active wildlife AI.
+    - **Low**: Lightweight & power-efficient — preserves animated wildlife and essential movement while idling heavy ambient particle emitters.
+    - **Off**: Absolute minimal footprint — freezes background repaints for 0% idle CPU overhead.
 
 ---
 

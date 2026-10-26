@@ -361,7 +361,7 @@ Item {
     fgColor: Color.foreground
   }
 
-  readonly property bool hovered: cardHover.hovered || resizer.active
+  readonly property bool hovered: cardHover.hovered || resizer.active || dragger.active || card.isClusterDragging
 
   HoverHandler {
     id: cardHover

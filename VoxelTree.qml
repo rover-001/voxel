@@ -49,6 +49,18 @@ Item {
   readonly property real birchShimmer: 0.0
   readonly property real pollenPhase: 0.0
 
+  property string animationLevel: "high"
+  readonly property bool isAnimated: root.active && root.visible && root.animationLevel !== "none"
+  readonly property bool hasParticles: root.active && root.visible && root.animationLevel === "high"
+
+  property real swayAngle: 0.0
+  SequentialAnimation on swayAngle {
+    loops: Animation.Infinite
+    running: root.isAnimated
+    NumberAnimation { from: -1.4; to: 1.4; duration: root.isSakura ? 3200 : (root.isOak ? 4200 : (root.isPine ? 2400 : 3600)); easing.type: Easing.InOutSine }
+    NumberAnimation { from: 1.4; to: -1.4; duration: root.isSakura ? 3200 : (root.isOak ? 4200 : (root.isPine ? 2400 : 3600)); easing.type: Easing.InOutSine }
+  }
+
   // Interactive rustle bounce pulse on hover/click
   property real rustlePulse: 0.0
   SequentialAnimation {
@@ -82,6 +94,12 @@ Item {
     id: canvas
     anchors.fill: parent
     onAvailableChanged: if (available) requestPaint()
+
+    transform: Rotation {
+      origin.x: canvas.width * 0.5
+      origin.y: canvas.height * (5.0 / 6.0)
+      angle: root.swayAngle
+    }
 
     onPaint: {
       var ctx = getContext("2d")
@@ -319,45 +337,6 @@ Item {
         // Crown blossom
         drawCube(cx + breezeSway * 1.25, uY - s * 0.92, s * 0.55 * breathe, s * 0.55 * breathe, "#ffffff", sTop2, sLeft2)
 
-        // Live Falling Sakura Petals with 3D Tumbling Flip
-        var petalCols = ["#fbcfe8", "#f472b6", "#fda4af", "#fb7185"]
-        var startH = canopyBaseY - s * 2.2
-        var endH = cy + s * 0.6
-        var totalDist = endH - startH
-
-        for (var i = 0; i < root.petalSeeds.length; i++) {
-          var pSeed = root.petalSeeds[i]
-          var pt = (root.sakuraPetalPhase * pSeed.spd + pSeed.yo) % 1.0
-
-          var drift = Math.sin(pt * Math.PI * pSeed.wFreq + pSeed.xo) * (s * 0.45 * pSeed.wAmp)
-          var px = cx + (pSeed.xo * s * 1.2) + drift + breezeSway * 0.6
-          var py = startH + pt * totalDist
-
-          var alpha = 1.0
-          if (pt < 0.12) alpha = pt / 0.12
-          else if (pt > 0.88) alpha = (1.0 - pt) / 0.12
-
-          var sz = s * 0.14 * pSeed.sz
-          var col = petalCols[pSeed.c % petalCols.length]
-
-          ctx.save()
-          ctx.translate(px, py)
-          ctx.rotate(pt * Math.PI * 4 + pSeed.xo)
-          // 3D tumbling paper flip (even multiple of PI ensures smooth loop wrap)
-          ctx.scale(Math.cos(pt * Math.PI * 4 + pSeed.xo), 1.0)
-          ctx.globalAlpha = Math.max(0, Math.min(1, alpha))
-
-          ctx.beginPath()
-          ctx.moveTo(0, -sz)
-          ctx.lineTo(sz * 1.2, 0)
-          ctx.lineTo(0, sz * 0.9)
-          ctx.lineTo(-sz * 1.2, 0)
-          ctx.closePath()
-          ctx.fillStyle = col
-          ctx.fill()
-          ctx.restore()
-        }
-
       // ---------------------------------------------------------------------
       // TREE 2: OAK (Heavy Branch Sway & Falling Acorns + Fluttering Leaves)
       // ---------------------------------------------------------------------
@@ -382,48 +361,6 @@ Item {
 
         var ouY = omY - s * 0.95
         drawCube(cx + oakAngle * 1.1, ouY - s * 0.3, s * 0.92, s * 0.82, oTop, oLeft, oRight)
-
-        // Bouncing Acorn Drop Animation (100% continuous periodic lifecycle envelope: buds -> falls -> bounces -> settles -> fades)
-        var acT = root.acornPhase
-        var acAlpha = 1.0
-        var acScale = 1.0
-        var acX = cx - s * 0.45
-        var acY = canopyBaseY + s * 0.05
-
-        if (acT < 0.15) {
-          // 1. Budding on canopy branch (fades and scales up from 0)
-          var growT = acT / 0.15
-          acAlpha = growT
-          acScale = 0.2 + 0.8 * growT
-        } else if (acT < 0.75) {
-          // 2. Falling with gravity acceleration
-          var fallT = (acT - 0.15) / 0.60
-          var fallEase = fallT * fallT
-          acX = (cx - s * 0.45) + Math.sin(fallT * Math.PI) * (s * 0.20)
-          acY = (canopyBaseY + s * 0.05) + fallEase * (cy - (canopyBaseY + s * 0.05))
-        } else if (acT < 0.88) {
-          // 3. Crisp bounce on ground
-          var bounceT = (acT - 0.75) / 0.13
-          var bounceH = Math.sin(bounceT * Math.PI) * (s * 0.22)
-          acX = (cx - s * 0.45) + (s * 0.10) + bounceT * (s * 0.08)
-          acY = cy - bounceH
-        } else {
-          // 4. Settles and smoothly fades into earth (alpha -> 0 at acT = 1.0)
-          var fadeT = (acT - 0.88) / 0.12
-          acX = (cx - s * 0.45) + (s * 0.18)
-          acY = cy
-          acAlpha = 1.0 - fadeT
-          acScale = 1.0 - fadeT * 0.25
-        }
-
-        if (acAlpha > 0.01) {
-          ctx.save()
-          ctx.globalAlpha = Math.max(0, Math.min(1, acAlpha))
-          var acSz = s * 0.16 * acScale
-          drawCube(acX, acY - acSz, acSz * 1.2, acSz * 0.6, "#78350f", "#451a03", "#291002") // Acorn Cap
-          drawCube(acX, acY, acSz, acSz * 0.8, "#d97706", "#b45309", "#92400e") // Acorn Nut
-          ctx.restore()
-        }
 
       // ---------------------------------------------------------------------
       // TREE 3: AUTUMN MAPLE (Dynamic Wind Gusts & Swirling Leaf Whirlwind)
@@ -454,46 +391,6 @@ Item {
         drawCube(cx - s * 0.35 + gustLean * 0.9, auY, s * 0.65, s * 0.65, aTop, aLeft, aRight)
         drawCube(cx + s * 0.35 + gustLean * 0.9, auY, s * 0.65, s * 0.65, aTop2, aLeft2, aRight2)
         drawCube(cx + gustLean * 1.1, auY - s * 0.3, s * 0.88, s * 0.8, aTop, aLeft, aRight)
-
-        // Swirling Autumn Leaf Whirlwind
-        var aColors = ["#fef08a", "#f97316", "#ef4444", "#ca8a04", "#dc2626"]
-        var aStartH = canopyBaseY - s * 2.0
-        var aEndH = cy + s * 0.6
-        var aTotalDist = aEndH - aStartH
-
-        for (var j = 0; j < root.petalSeeds.length; j++) {
-          var aSeed = root.petalSeeds[j]
-          var at = (root.autumnLeafPhase * aSeed.spd + aSeed.yo) % 1.0
-
-          // Sweeping whirlwind path: wide horizontal drift during gusts (harmonic 4*PI ensures zero wrap jerk)
-          var gustSweep = root.autumnGust * (s * 0.7)
-          var aDrift = Math.sin(at * Math.PI * 4.0 + aSeed.xo) * (s * 0.5 * aSeed.wAmp)
-          var ax = cx + (aSeed.xo * s * 1.1) + aDrift + gustSweep
-          var ay = aStartH + at * aTotalDist
-
-          var aAlpha = 1.0
-          if (at < 0.12) aAlpha = at / 0.12
-          else if (at > 0.88) aAlpha = (1.0 - at) / 0.12
-
-          var aSz = s * 0.15 * aSeed.sz
-          var aCol = aColors[aSeed.c % aColors.length]
-
-          ctx.save()
-          ctx.translate(ax, ay)
-          ctx.rotate(at * Math.PI * 6 + aSeed.xo)
-          ctx.scale(Math.cos(at * Math.PI * 4), 1.0)
-          ctx.globalAlpha = Math.max(0, Math.min(1, aAlpha))
-
-          ctx.beginPath()
-          ctx.moveTo(0, -aSz * 1.1)
-          ctx.lineTo(aSz * 1.1, 0)
-          ctx.lineTo(0, aSz * 0.8)
-          ctx.lineTo(-aSz * 1.1, 0)
-          ctx.closePath()
-          ctx.fillStyle = aCol
-          ctx.fill()
-          ctx.restore()
-        }
 
       // ---------------------------------------------------------------------
       // TREE 4: PINE (Alpine Spire Flex & Drifting Snow/Frost Flurries)
@@ -526,42 +423,6 @@ Item {
         drawCube(cx + spireSway * 1.15, pt4, s * 0.48, s * 0.55, "#34d399", pTop, pLeft)
         drawCube(cx + spireSway * 1.35, pt4 - s * 0.48, s * 0.25, s * 0.4, "#ffffff", "#6ee7b7", "#34d399")
 
-        // Alpine Snow Flurry Particles (4*PI harmonic guarantees smooth rotation wrap)
-        var sStartH = pt4 - s * 0.6
-        var sEndH = cy + s * 0.5
-        var sTotalDist = sEndH - sStartH
-
-        for (var k = 0; k < root.petalSeeds.length; k++) {
-          var sSeed = root.petalSeeds[k]
-          var st = (root.snowFlurryPhase * sSeed.spd + sSeed.yo) % 1.0
-
-          var sDrift = Math.sin(st * Math.PI * 4 + sSeed.xo) * (s * 0.35)
-          var sx = cx + (sSeed.xo * s * 1.1) + sDrift + spireSway * 0.4
-          var sy = sStartH + st * sTotalDist
-
-          var sAlpha = 1.0
-          if (st < 0.15) sAlpha = st / 0.15
-          else if (st > 0.85) sAlpha = (1.0 - st) / 0.15
-
-          var sSz = s * 0.08 * sSeed.sz
-
-          ctx.save()
-          ctx.translate(sx, sy)
-          ctx.rotate(st * Math.PI * 4)
-          ctx.globalAlpha = Math.max(0, Math.min(1, sAlpha))
-
-          // Diamond snow flake
-          ctx.beginPath()
-          ctx.moveTo(0, -sSz)
-          ctx.lineTo(sSz, 0)
-          ctx.lineTo(0, sSz)
-          ctx.lineTo(-sSz, 0)
-          ctx.closePath()
-          ctx.fillStyle = (k % 3 === 0) ? "#ffffff" : "#e0f2fe"
-          ctx.fill()
-          ctx.restore()
-        }
-
       // ---------------------------------------------------------------------
       // TREE 5: BIRCH (Quivering Aspen Shimmer & Rising Golden Pollen Motes)
       // ---------------------------------------------------------------------
@@ -586,17 +447,217 @@ Item {
 
         var buY = bmY - s * 0.95
         drawCube(cx + shimmer1 * 0.8, buY - s * 0.3, s * 0.85, s * 0.78, bTop, bLeft, bRight)
+      }
+    }
+  }
 
-        // Golden Spring Pollen / Dandelion Motes (Floating upwards and swirling seamlessly)
+  // Falling leaf/petal particle cycle
+  property real particlePhase: 0.0
+  NumberAnimation on particlePhase {
+    from: 0.0; to: 1.0
+    duration: root.isSakura ? 3400 : (root.isAutumn ? 2800 : (root.isPine ? 3200 : (root.isOak ? 2600 : 3800)))
+    loops: Animation.Infinite
+    running: root.hasParticles
+  }
+
+  // Lightweight particle canvas — ONLY draws the 12 tiny leaf/petal particles
+  Canvas {
+    id: particleCanvas
+    anchors.fill: parent
+    visible: root.hasParticles
+    onAvailableChanged: if (available) requestPaint()
+
+    onPaint: {
+      var ctx = getContext("2d")
+      ctx.clearRect(0, 0, width, height)
+
+      var s = root.voxelUnit
+      var cx = width * 0.5
+      var cy = height * (5.0 / 6.0)
+      var canopyBaseY = cy - s * 1.5
+
+      function drawCube(x, y, szW, szH, topC, leftC, rightC) {
+        var sw = szW || s
+        var sh = szH || sw
+        var sy = sw * 0.5
+        ctx.beginPath()
+        ctx.moveTo(x, y - sh - sy)
+        ctx.lineTo(x + sw, y - sh)
+        ctx.lineTo(x, y - sh + sy)
+        ctx.lineTo(x - sw, y - sh)
+        ctx.closePath()
+        ctx.fillStyle = topC
+        ctx.fill()
+
+        ctx.beginPath()
+        ctx.moveTo(x - sw, y - sh)
+        ctx.lineTo(x, y - sh + sy)
+        ctx.lineTo(x, y + sy)
+        ctx.lineTo(x - sw, y)
+        ctx.closePath()
+        ctx.fillStyle = leftC
+        ctx.fill()
+
+        ctx.beginPath()
+        ctx.moveTo(x, y - sh + sy)
+        ctx.lineTo(x + sw, y - sh)
+        ctx.lineTo(x + sw, y)
+        ctx.lineTo(x, y + sy)
+        ctx.closePath()
+        ctx.fillStyle = rightC
+        ctx.fill()
+      }
+
+      if (root.isSakura) {
+        var petalCols = ["#fbcfe8", "#f472b6", "#fda4af", "#fb7185"]
+        var startH = canopyBaseY - s * 2.2
+        var endH = cy + s * 0.6
+        var totalDist = endH - startH
+
+        for (var i = 0; i < root.petalSeeds.length; i++) {
+          var pSeed = root.petalSeeds[i]
+          var pt = (root.particlePhase * pSeed.spd + pSeed.yo) % 1.0
+          var drift = Math.sin(pt * Math.PI * pSeed.wFreq + pSeed.xo) * (s * 0.45 * pSeed.wAmp)
+          var px = cx + (pSeed.xo * s * 1.2) + drift
+          var py = startH + pt * totalDist
+
+          var alpha = 1.0
+          if (pt < 0.12) alpha = pt / 0.12
+          else if (pt > 0.88) alpha = (1.0 - pt) / 0.12
+
+          var sz = s * 0.14 * pSeed.sz
+          var col = petalCols[pSeed.c % petalCols.length]
+
+          ctx.save()
+          ctx.translate(px, py)
+          ctx.rotate(pt * Math.PI * 4 + pSeed.xo)
+          ctx.scale(Math.cos(pt * Math.PI * 4 + pSeed.xo), 1.0)
+          ctx.globalAlpha = Math.max(0, Math.min(1, alpha))
+
+          ctx.beginPath()
+          ctx.moveTo(0, -sz)
+          ctx.lineTo(sz * 1.2, 0)
+          ctx.lineTo(0, sz * 0.9)
+          ctx.lineTo(-sz * 1.2, 0)
+          ctx.closePath()
+          ctx.fillStyle = col
+          ctx.fill()
+          ctx.restore()
+        }
+      } else if (root.isOak) {
+        var acT = root.particlePhase
+        var acAlpha = 1.0
+        var acScale = 1.0
+        var acX = cx - s * 0.45
+        var acY = canopyBaseY + s * 0.05
+
+        if (acT < 0.15) {
+          var growT = acT / 0.15
+          acAlpha = growT
+          acScale = 0.2 + 0.8 * growT
+        } else if (acT < 0.75) {
+          var fallT = (acT - 0.15) / 0.60
+          var fallEase = fallT * fallT
+          acX = (cx - s * 0.45) + Math.sin(fallT * Math.PI) * (s * 0.20)
+          acY = (canopyBaseY + s * 0.05) + fallEase * (cy - (canopyBaseY + s * 0.05))
+        } else if (acT < 0.88) {
+          var bounceT = (acT - 0.75) / 0.13
+          var bounceH = Math.sin(bounceT * Math.PI) * (s * 0.22)
+          acX = (cx - s * 0.45) + (s * 0.10) + bounceT * (s * 0.08)
+          acY = cy - bounceH
+        } else {
+          var fadeT = (acT - 0.88) / 0.12
+          acX = (cx - s * 0.45) + (s * 0.18)
+          acY = cy
+          acAlpha = 1.0 - fadeT
+          acScale = 1.0 - fadeT * 0.25
+        }
+
+        if (acAlpha > 0.01) {
+          ctx.save()
+          ctx.globalAlpha = Math.max(0, Math.min(1, acAlpha))
+          var acSz = s * 0.16 * acScale
+          drawCube(acX, acY - acSz, acSz * 1.2, acSz * 0.6, "#78350f", "#451a03", "#291002")
+          drawCube(acX, acY, acSz, acSz * 0.8, "#d97706", "#b45309", "#92400e")
+          ctx.restore()
+        }
+      } else if (root.isAutumn) {
+        var aColors = ["#fef08a", "#f97316", "#ef4444", "#ca8a04", "#dc2626"]
+        var aStartH = canopyBaseY - s * 2.0
+        var aEndH = cy + s * 0.6
+        var aTotalDist = aEndH - aStartH
+
+        for (var j = 0; j < root.petalSeeds.length; j++) {
+          var aSeed = root.petalSeeds[j]
+          var at = (root.particlePhase * aSeed.spd + aSeed.yo) % 1.0
+          var aDrift = Math.sin(at * Math.PI * 4.0 + aSeed.xo) * (s * 0.5 * aSeed.wAmp)
+          var ax = cx + (aSeed.xo * s * 1.1) + aDrift
+          var ay = aStartH + at * aTotalDist
+
+          var aAlpha = 1.0
+          if (at < 0.12) aAlpha = at / 0.12
+          else if (at > 0.88) aAlpha = (1.0 - at) / 0.12
+
+          var aSz = s * 0.15 * aSeed.sz
+          var aCol = aColors[aSeed.c % aColors.length]
+
+          ctx.save()
+          ctx.translate(ax, ay)
+          ctx.rotate(at * Math.PI * 6 + aSeed.xo)
+          ctx.scale(Math.cos(at * Math.PI * 4), 1.0)
+          ctx.globalAlpha = Math.max(0, Math.min(1, aAlpha))
+
+          ctx.beginPath()
+          ctx.moveTo(0, -aSz * 1.1)
+          ctx.lineTo(aSz * 1.1, 0)
+          ctx.lineTo(0, aSz * 0.8)
+          ctx.lineTo(-aSz * 1.1, 0)
+          ctx.closePath()
+          ctx.fillStyle = aCol
+          ctx.fill()
+          ctx.restore()
+        }
+      } else if (root.isPine) {
+        var sStartH = cy - s * 3.8
+        var sEndH = cy + s * 0.5
+        var sTotalDist = sEndH - sStartH
+
+        for (var k = 0; k < root.petalSeeds.length; k++) {
+          var sSeed = root.petalSeeds[k]
+          var st = (root.particlePhase * sSeed.spd + sSeed.yo) % 1.0
+          var sDrift = Math.sin(st * Math.PI * 4 + sSeed.xo) * (s * 0.35)
+          var sx = cx + (sSeed.xo * s * 1.1) + sDrift
+          var sy = sStartH + st * sTotalDist
+
+          var sAlpha = 1.0
+          if (st < 0.15) sAlpha = st / 0.15
+          else if (st > 0.85) sAlpha = (1.0 - st) / 0.15
+
+          var sSz = s * 0.08 * sSeed.sz
+
+          ctx.save()
+          ctx.translate(sx, sy)
+          ctx.rotate(st * Math.PI * 4)
+          ctx.globalAlpha = Math.max(0, Math.min(1, sAlpha))
+
+          ctx.beginPath()
+          ctx.moveTo(0, -sSz)
+          ctx.lineTo(sSz, 0)
+          ctx.lineTo(0, sSz)
+          ctx.lineTo(-sSz, 0)
+          ctx.closePath()
+          ctx.fillStyle = (k % 3 === 0) ? "#ffffff" : "#e0f2fe"
+          ctx.fill()
+          ctx.restore()
+        }
+      } else if (root.isBirch) {
         var pStartH = cy + s * 0.3
-        var pEndH = buY - s * 1.2
+        var pEndH = cy - s * 3.2
         var pTotalDist = pStartH - pEndH
 
         for (var m = 0; m < root.petalSeeds.length; m++) {
           var pSeed2 = root.petalSeeds[m]
-          var pmt = (root.pollenPhase * pSeed2.spd + pSeed2.yo) % 1.0
-
-          // Motes rise upwards on thermal breezes with 4*PI harmonic drift!
+          var pmt = (root.particlePhase * pSeed2.spd + pSeed2.yo) % 1.0
           var pmx = cx + (pSeed2.xo * s * 1.3) + Math.sin(pmt * Math.PI * 4.0 + pSeed2.xo) * (s * 0.35)
           var pmy = pStartH - pmt * pTotalDist
 
@@ -618,6 +679,14 @@ Item {
         }
       }
     }
+  }
+
+  Timer {
+    id: particleTimer
+    interval: 45 // ~22 FPS smooth falling leaf/petal animation
+    running: root.hasParticles
+    repeat: true
+    onTriggered: particleCanvas.requestPaint()
   }
 
   // Interactive rustle on mouse press

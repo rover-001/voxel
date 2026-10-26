@@ -22,18 +22,29 @@ Panel {
 
   // Category state
   property int currentCategoryIndex: 0
-  readonly property var currentCategory: Model.CATEGORIES[currentCategoryIndex]
+  readonly property var categoryList: [
+    { id: "blocks", name: "BLOCKS" },
+    { id: "trees", name: "TREES" },
+    { id: "creatures", name: "ANIMALS" },
+    { id: "props", name: "PROPS" },
+    { id: "time", name: "CLOCK" },
+    { id: "settings", name: "SETTINGS" }
+  ]
+  readonly property var currentCategory: categoryList[currentCategoryIndex]
+  readonly property bool isSettingsCategory: currentCategory && currentCategory.id === "settings"
 
   // Item state
   property int selectedIndex: 0
-  readonly property var allItems: Model.itemsFor(currentCategory.id)
+  readonly property var allItems: isSettingsCategory ? [] : Model.itemsFor(currentCategory.id)
   readonly property var currentItem: allItems.length > 0 ? allItems[selectedIndex] : null
 
   onCurrentCategoryIndexChanged: {
     selectedIndex = 0
-    previewAnim.restart()
+    if (!isSettingsCategory) previewAnim.restart()
   }
-  onSelectedIndexChanged: previewAnim.restart()
+  onSelectedIndexChanged: {
+    if (!isSettingsCategory) previewAnim.restart()
+  }
 
   readonly property var voxelService: Reg.get()
     || (root.bar && root.bar.shell ? root.bar.shell.serviceFor("voxel") : null)
@@ -56,7 +67,7 @@ Panel {
   }
 
   function placeCurrent() {
-    if (!root.currentItem) return
+    if (root.isSettingsCategory || !root.currentItem) return
     var svc = root.voxelService
     if (!svc) return
     var screenObj = root.panelScreen()
@@ -72,7 +83,7 @@ Panel {
     open: root.opened
     centerOnBar: true
     focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(420))
+    contentWidth: panel.fittedContentWidth(Style.space(380))
     contentHeight: panel.fittedContentHeight(contentColumn.implicitHeight)
 
     PanelKeyCatcher {
@@ -85,7 +96,7 @@ Panel {
         if (dx < 0) panel.navLeft()
         else if (dx > 0) panel.navRight()
         else if (dy !== 0) {
-          root.currentCategoryIndex = (root.currentCategoryIndex + 1) % Model.CATEGORIES.length
+          root.currentCategoryIndex = (root.currentCategoryIndex + (dy > 0 ? 1 : root.categoryList.length - 1)) % root.categoryList.length
         }
       }
     }
@@ -103,22 +114,22 @@ Panel {
     Column {
       id: contentColumn
       width: parent.width
-      spacing: Style.space(12)
+      spacing: Style.space(8)
 
-      // ---- Top Category Tabs (BLOCKS / DIORAMAS) -------------------------
+      // ---- Top Category Tabs (BLOCKS / TREES / ANIMALS / PROPS / CLOCK / SETTINGS)
       Row {
         anchors.horizontalCenter: parent.horizontalCenter
-        spacing: Style.space(8)
+        spacing: Style.space(5)
 
         Repeater {
-          model: Model.CATEGORIES
+          model: root.categoryList
           delegate: Rectangle {
             required property var modelData
             required property int index
             readonly property bool isSelected: root.currentCategoryIndex === index
 
-            width: Style.space(78)
-            height: Style.space(26)
+            width: Style.space(56)
+            height: Style.space(24)
             radius: Style.space(6)
             color: isSelected
               ? Util.alpha(Color.accent, 0.22)
@@ -134,9 +145,9 @@ Panel {
               text: modelData.name
               color: isSelected ? Color.accent : Util.alpha(root.barForeground, 0.6)
               font.family: Style.font.family
-              font.pixelSize: Style.font.caption
+              font.pixelSize: Style.space(9)
               font.weight: isSelected ? Font.Bold : Font.Normal
-              font.letterSpacing: 1.2
+              font.letterSpacing: 0.8
             }
 
             MouseArea {
@@ -152,8 +163,10 @@ Panel {
 
       // ---- Preview Stage (Pure Visual, Zero Text) ------------------------
       Item {
+        id: previewStage
         width: parent.width
-        height: Style.space(210)
+        height: Style.space(135)
+        visible: !root.isSettingsCategory
 
         Rectangle {
           id: previewContainer
@@ -186,7 +199,7 @@ Panel {
           Item {
             id: previewArea
             anchors.fill: parent
-            anchors.margins: Style.space(12)
+            anchors.margins: Style.space(10)
 
             ParallelAnimation {
               id: previewAnim
@@ -212,7 +225,7 @@ Panel {
               anchors.centerIn: parent
               visible: root.currentItem && root.currentItem.category === "trees"
               active: root.opened && visible
-              widgetScale: 2.4
+              widgetScale: 2.1
               treeType: root.currentItem && root.currentItem.treeType ? root.currentItem.treeType : "sakura"
               fgColor: root.barForeground
               accentColor: Color.accent
@@ -224,7 +237,7 @@ Panel {
               anchors.centerIn: parent
               visible: root.currentItem && root.currentItem.category === "props"
               active: root.opened && visible
-              widgetScale: 2.8
+              widgetScale: 2.3
               propType: root.currentItem && root.currentItem.propType ? root.currentItem.propType : "bench"
               fgColor: root.barForeground
               accentColor: Color.accent
@@ -236,7 +249,7 @@ Panel {
               anchors.centerIn: parent
               visible: root.currentItem && root.currentItem.category === "creatures"
               active: root.opened && visible
-              widgetScale: 3.6
+              widgetScale: 3.2
               animalType: root.currentItem && root.currentItem.animalType ? root.currentItem.animalType : "chicken"
               fgColor: root.barForeground
               accentColor: Color.accent
@@ -248,7 +261,7 @@ Panel {
               anchors.centerIn: parent
               visible: root.currentItem && root.currentItem.category === "blocks"
               active: root.opened && visible
-              widgetScale: 3.6
+              widgetScale: 4.8
               blockType: root.currentItem && root.currentItem.blockType ? root.currentItem.blockType : "grass"
               fgColor: root.barForeground
               accentColor: Color.accent
@@ -260,7 +273,7 @@ Panel {
               anchors.centerIn: parent
               visible: root.currentItem && root.currentItem.category === "time"
               active: root.opened && visible
-              clockScale: 0.95
+              clockScale: 0.8
               fgColor: root.barForeground
               accentColor: Color.accent
             }
@@ -355,9 +368,152 @@ Panel {
         }
       }
 
+      // ---- Settings View (Shown when SETTINGS tab is active) ------------
+      Item {
+        id: settingsView
+        width: parent.width
+        height: Style.space(165)
+        visible: root.isSettingsCategory
+
+        Rectangle {
+          anchors.fill: parent
+          radius: Style.space(12)
+          color: Util.alpha(root.barForeground, 0.04)
+          border.width: 1
+          border.color: Util.alpha(root.barForeground, 0.1)
+
+          Column {
+            anchors.centerIn: parent
+            width: parent.width - Style.space(20)
+            spacing: Style.space(10)
+
+            // Section Header
+            Row {
+              anchors.horizontalCenter: parent.horizontalCenter
+              spacing: Style.space(6)
+
+              Text {
+                text: "⚡"
+                font.pixelSize: Style.space(11)
+              }
+              Text {
+                text: "ANIMATION PRESET"
+                color: root.barForeground
+                font.family: Style.font.family
+                font.pixelSize: Style.space(9)
+                font.weight: Font.DemiBold
+                font.letterSpacing: 1.2
+              }
+            }
+
+            // 3-way Profile Cards: OFF | LOW | HIGH
+            Row {
+              anchors.horizontalCenter: parent.horizontalCenter
+              spacing: Style.space(6)
+
+              Repeater {
+                model: [
+                  { id: "none", label: "OFF",  icon: "⏹", badge: "Zero Lag", desc: "No animations (Static)" },
+                  { id: "low",  label: "LOW",  icon: "🍃", badge: "Balanced", desc: "GPU tree sway + animal AI" },
+                  { id: "high", label: "HIGH", icon: "✨", badge: "Cinematic", desc: "Full physics & particle FX" }
+                ]
+
+                delegate: Rectangle {
+                  required property var modelData
+                  required property int index
+                  readonly property bool isCur: (root.voxelService ? root.voxelService.animationLevel : "high") === modelData.id
+
+                  width: Style.space(106)
+                  height: Style.space(48)
+                  radius: Style.space(8)
+                  color: isCur
+                    ? Util.alpha(Color.accent, 0.24)
+                    : (btnHover.containsMouse ? Util.alpha(root.barForeground, 0.08) : Util.alpha(root.barForeground, 0.03))
+                  border.width: isCur ? 1.5 : 1
+                  border.color: isCur ? Color.accent : Util.alpha(root.barForeground, 0.12)
+
+                  Behavior on color { ColorAnimation { duration: 140 } }
+                  Behavior on border.color { ColorAnimation { duration: 140 } }
+
+                  Column {
+                    anchors.centerIn: parent
+                    spacing: Style.space(2)
+
+                    Row {
+                      anchors.horizontalCenter: parent.horizontalCenter
+                      spacing: Style.space(4)
+                      Text {
+                        text: modelData.icon
+                        font.pixelSize: Style.space(10)
+                      }
+                      Text {
+                        text: modelData.label
+                        color: isCur ? Color.accent : root.barForeground
+                        font.family: Style.font.family
+                        font.pixelSize: Style.space(10)
+                        font.weight: isCur ? Font.Bold : Font.Normal
+                        font.letterSpacing: 0.8
+                      }
+                    }
+
+                    Text {
+                      anchors.horizontalCenter: parent.horizontalCenter
+                      text: modelData.badge
+                      color: isCur ? Util.alpha(Color.accent, 0.9) : Util.alpha(root.barForeground, 0.45)
+                      font.family: Style.font.family
+                      font.pixelSize: Style.space(8)
+                    }
+                  }
+
+                  MouseArea {
+                    id: btnHover
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                      if (root.voxelService) {
+                        root.voxelService.setAnimationLevel(modelData.id)
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
+            // Description of currently active mode
+            Rectangle {
+              anchors.horizontalCenter: parent.horizontalCenter
+              width: parent.width
+              height: Style.space(38)
+              radius: Style.space(6)
+              color: Util.alpha(Color.accent, 0.08)
+              border.width: 1
+              border.color: Util.alpha(Color.accent, 0.18)
+
+              Text {
+                anchors.centerIn: parent
+                width: parent.width - Style.space(16)
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+                color: Util.alpha(root.barForeground, 0.75)
+                font.family: Style.font.family
+                font.pixelSize: Style.space(9)
+                text: {
+                  var lvl = root.voxelService ? root.voxelService.animationLevel : "high"
+                  if (lvl === "none") return "⏹ Static snapshot: all animations frozen for 0% CPU and zero GPU overhead."
+                  if (lvl === "low") return "🍃 Optimized: GPU tree wind sway, animated walking pets AI, campfire & warm lantern glow."
+                  return "✨ Cinematic: Full physics with falling petals, leaves, snow, smoke embers, and water spray."
+                }
+              }
+            }
+          }
+        }
+      }
+
       // ---- Bottom Visual Palette (Direct click any icon/cube) -------------
       Row {
         anchors.horizontalCenter: parent.horizontalCenter
+        visible: !root.isSettingsCategory
         spacing: Style.space(6)
 
         Repeater {
