@@ -75,9 +75,8 @@ Item {
     var scrH = scrObj ? scrObj.height : 1080
 
     var isBlock = styleId && (styleId.indexOf("block-") !== -1 || styleId.indexOf("voxel-block-") !== -1)
-    var isWord = styleId && (styleId === "word-rover" || styleId === "voxel-word-rover")
     var isTree = styleId && (styleId.indexOf("tree-") !== -1 || styleId.indexOf("voxel-tree-") !== -1)
-    var defaultScale = isWord ? 4.2 : ((isBlock || isTree) ? 3.6 : 2.2)
+    var defaultScale = (isBlock || isTree) ? 3.6 : 2.2
     var blockSize = Style.space(8) * defaultScale
 
     // Center squarely on the desktop

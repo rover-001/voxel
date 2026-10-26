@@ -242,15 +242,6 @@ Panel {
               accentColor: Color.accent
             }
 
-            VoxelWord {
-              anchors.centerIn: parent
-              visible: root.currentItem && root.currentItem.category === "words"
-              active: root.opened && visible
-              widgetScale: 1.25
-              fgColor: root.barForeground
-              accentColor: Color.accent
-            }
-
             // Live Block Preview
             VoxelBlock {
               id: previewBlock
