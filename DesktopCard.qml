@@ -95,7 +95,7 @@ Item {
   }
 
   transformOrigin: Item.Center
-  rotation: (card.isProp || card.isBlock || card.isTree) ? 0 : card.rotationAngle
+  rotation: (card.isProp || card.isBlock || card.isTree || card.isAnimal) ? 0 : card.rotationAngle
 
   function clampIntoScreen() {
     if (!card.screen) return
@@ -451,7 +451,7 @@ Item {
     z: 100
     x: card.width - removeDot.width / 2 - Style.space(22)
     y: -rotateCwDot.height / 2
-    visible: (card.hovered || card.selected) && !card.locked
+    visible: (card.hovered || card.selected) && !card.locked && !card.isAnimal
     opacity: visible ? 1 : 0
     Behavior on opacity { NumberAnimation { duration: 120 } }
     width: Style.space(18)
@@ -497,7 +497,7 @@ Item {
     z: 100
     x: card.width - removeDot.width / 2 - Style.space(44)
     y: -rotateCcwDot.height / 2
-    visible: (card.hovered || card.selected) && !card.locked
+    visible: (card.hovered || card.selected) && !card.locked && !card.isAnimal
     opacity: visible ? 1 : 0
     Behavior on opacity { NumberAnimation { duration: 120 } }
     width: Style.space(18)

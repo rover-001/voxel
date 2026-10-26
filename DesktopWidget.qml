@@ -235,9 +235,10 @@ PanelWindow {
 
     clearClusterTimer.stop()
 
-    // Single item rotation (single block or prop like bench, lamp, fence, waterfall)
+    // Single item rotation (single block or prop like bench, lamp, fence, stairs)
     if (cluster.length === 1) {
       var singleItem = cluster[0]
+      if (singleItem.isAnimal) return // Animals manage their own facing direction and are not rotatable
       var rotStep = dir > 0 ? 90 : -90
       var newAngle = ((Number(singleItem.rotationAngle || 0) + rotStep) % 360 + 360) % 360
       singleItem.rotationAngle = newAngle

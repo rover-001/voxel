@@ -8,7 +8,6 @@ import qs.Commons
 // - campfire: Stone-ring firepit with animated flickering flames and rising embers
 // - flowers: Blooming multi-colored flower bed with gentle breeze sway
 // - fence: Rustic wooden post and rail barrier segment (rotatable 360°)
-// - waterfall: Cascading waterfall with rushing veil, animated white-water streaks, and foot splash!
 // All props share the exact even-integer voxelUnit isometric grid as VoxelBlock.
 Item {
   id: root
@@ -23,7 +22,7 @@ Item {
   // Unified even-integer voxel unit for seamless alignment with VoxelBlock
   readonly property real voxelUnit: Math.round((Style.space(8) * root.widgetScale) / 2) * 2
 
-  // Expanded canvas dimensions to provide generous headroom for tall lamps and waterfall drops
+  // Expanded canvas dimensions to provide generous headroom for tall lamps
   implicitWidth: Math.round((voxelUnit * 3.6) / 2) * 2
   implicitHeight: Math.round((voxelUnit * 4.4) / 2) * 2
   width: implicitWidth
@@ -69,15 +68,6 @@ Item {
     running: root.active && root.visible && root.propType === "flowers"
   }
 
-  // Waterfall: Rapid water curtain and churning foam rapids loop
-  property real waterfallPhase: 0.0
-  NumberAnimation on waterfallPhase {
-    from: 0.0; to: 1.0
-    duration: 900
-    loops: Animation.Infinite
-    running: root.active && root.visible && root.propType === "waterfall"
-  }
-
   onPropTypeChanged: canvas.requestPaint()
   onPropRotationChanged: canvas.requestPaint()
   onVoxelUnitChanged: canvas.requestPaint()
@@ -85,7 +75,6 @@ Item {
   onWaterPhaseChanged: canvas.requestPaint()
   onFlamePhaseChanged: canvas.requestPaint()
   onFlowerSwayChanged: canvas.requestPaint()
-  onWaterfallPhaseChanged: canvas.requestPaint()
 
   Canvas {
     id: canvas
@@ -475,70 +464,7 @@ Item {
       }
 
       // ====================================================================
-      // 7. WATERFALL (CASCADING WATER VEIL & FOAM RAPIDS - ROTATABLE!)
-      // ====================================================================
-      else if (root.propType === "waterfall") {
-        var wTop = "#38bdf8"
-        var wLeft = "#0284c7"
-        var wRight = "#0369a1"
-        var wFoam = "#e0f2fe"
-
-        // Upper water inflow stream across the top block face
-        drawIsoBox(-0.7, -0.7, 0, 1.4, 1.4, 0.12, wTop, wLeft, wRight, null)
-
-        // Animated surface currents on inflow stream
-        var streamOffset = (root.waterfallPhase * s * 0.4)
-        var sP1 = isoPt(-0.5, -0.3 + (root.waterfallPhase * 0.4), 0.13)
-        var sP2 = isoPt( 0.3, -0.3 + (root.waterfallPhase * 0.4), 0.13)
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.65)"
-        ctx.lineWidth = 1.2
-        ctx.beginPath()
-        ctx.moveTo(sP1.x, sP1.y)
-        ctx.lineTo(sP2.x, sP2.y)
-        ctx.stroke()
-
-        // Cliff crest / curling water spillway lip
-        drawIsoBox(-0.75, 0.55, 0.02, 1.5, 0.22, 0.16, "#7dd3fc", wLeft, wRight, null)
-
-        // Cascading vertical water curtain pouring DOWN 1.6 block units below the rim
-        drawIsoBox(-0.75, 0.72, -1.6, 1.5, 0.14, 1.66, "#7dd3fc", "#0284c7", "#0369a1", null)
-
-        // Animated rushing white-water streaks cascading down the fall
-        for (var strk = 0; strk < 4; strk++) {
-          var strkProg = (root.waterfallPhase * 2.2 + strk * 0.25) % 1.0
-          var strkU = -0.55 + strk * 0.35
-          var strkW = 0.1 - strkProg * 1.65
-          var strkPt1 = isoPt(strkU, 0.79, strkW)
-          var strkPt2 = isoPt(strkU, 0.79, strkW - 0.35)
-
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.85)"
-          ctx.lineWidth = 1.8
-          ctx.beginPath()
-          ctx.moveTo(strkPt1.x, strkPt1.y)
-          ctx.lineTo(strkPt2.x, strkPt2.y)
-          ctx.stroke()
-        }
-
-        // Churning Splash Pool & Mist Clouds at the base of the waterfall
-        drawIsoBox(-0.85, 0.60, -1.65, 1.7, 0.6, 0.14, wFoam, "#38bdf8", "#0284c7", null)
-
-        // Bouncing water splash droplets & mist
-        for (var sp = 0; sp < 4; sp++) {
-          var spProg = (root.waterfallPhase * 2.5 + sp * 0.25) % 1.0
-          var spU = -0.4 + sp * 0.26 + Math.sin(spProg * Math.PI) * 0.15
-          var spV = 0.85 + Math.cos(spProg * Math.PI) * 0.15
-          var spH = -1.55 + Math.sin(spProg * Math.PI) * 0.4
-          var spPt = isoPt(spU, spV, spH)
-
-          ctx.fillStyle = "rgba(240, 249, 255, " + (1.0 - spProg * 0.6) + ")"
-          ctx.beginPath()
-          ctx.arc(spPt.x, spPt.y, s * (0.06 + (1.0 - spProg) * 0.04), 0, Math.PI * 2)
-          ctx.fill()
-        }
-      }
-
-      // ====================================================================
-      // 8. STAIRS (3-TIER ISOMETRIC ASCENDING STAIRCASE - ROTATABLE!)
+      // 7. STAIRS (3-TIER ISOMETRIC ASCENDING STAIRCASE - ROTATABLE!)
       // ====================================================================
       else if (root.propType === "stairs") {
         var stWoodT = "#d97706"
